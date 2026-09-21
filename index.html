@@ -33,10 +33,11 @@
             z-index: 5;
         }
         .score-box {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.08);
             padding: 10px 20px;
             border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(5px);
         }
         #startScreen {
             position: absolute;
@@ -84,7 +85,7 @@
 
     <div id="startScreen">
         <h1>V / A — SLICER</h1>
-        <p>Режь топовый шмот, избегай бомб</p>
+        <p>Режь брендовый шмот, обходи паленку</p>
         <button class="btn" onclick="startGame()">ИГРАТЬ</button>
     </div>
 
@@ -108,42 +109,51 @@
         let particles = [];
         let trail = [];
 
-        // Ссылки на твои PNG картинки брендов (можешь заменить на любые другие прямые ссылки на картинки)
-        const itemSources = [
-            { name: "Raf Simons", url: "https://i.imgur.com/35h5h5h.png", isBomb: false }, // Замени ссылки на реальные PNG при желании, либо используются стильные заглушки-текстуры
-            { name: "Valentino", url: "", isBomb: false },
-            { name: "Air Jordan", url: "", isBomb: false },
-            { name: "Olimpika", url: "", isBomb: false },
-            { name: "Guess", url: "", isBomb: false },
-            { name: "БОМБА", url: "", isBomb: true }
+        // Полный гардероб: футболки, кроссовки, зипки и куртки
+        const itemTypes = [
+            // Stone Island
+            { name: "Stone Island Tee", accent: "#3498db", badge: "TEE" },
+            { name: "Stone Island Jacket", accent: "#2980b9", badge: "JACKET" },
+            // Valentino
+            { name: "Valentino Sneakers", accent: "#9b59b6", badge: "SNEAKERS" },
+            { name: "Valentino Hoodie", accent: "#8e44ad", badge: "HOODIE" },
+            // Gucci
+            { name: "Gucci Tee", accent: "#1abc9c", badge: "TEE" },
+            { name: "Gucci Jacket", accent: "#16a085", badge: "OUTERWEAR" },
+            // Givenchy
+            { name: "Givenchy Tee", accent: "#e67e22", badge: "TEE" },
+            // Raf Simons
+            { name: "Raf Simons Archive", accent: "#f1c40f", badge: "ARCHIVE" },
+            { name: "Raf Simons Runner", accent: "#f39c12", badge: "SNEAKERS" },
+            // Rick Owens
+            { name: "Rick Owens Geobasket", accent: "#ffffff", badge: "FOOTWEAR" },
+            { name: "Rick Owens Bomber", accent: "#bdc3c7", badge: "JACKET" },
+            // Off-White
+            { name: "Off-White Tee", accent: "#e74c3c", badge: "TEE" },
+            { name: "Off-White Hoodie", accent: "#c0392b", badge: "HOODIE" },
+            // Nike & Puma
+            { name: "Nike Sneakers", accent: "#34495e", badge: "SNEAKERS" },
+            { name: "Puma Archive", accent: "#d35400", badge: "KICKS" },
+            // Maison Margiela
+            { name: "Margiela Tabi", accent: "#e84393", badge: "TABI" },
+            { name: "Margiela Tee", accent: "#fd79a8", badge: "TEE" },
+            // Зипки и олимпийки
+            { name: "Olimpika Zip", accent: "#2ecc71", badge: "ZIP-HOODIE" },
+            { name: "Olimpika Jacket", accent: "#27ae60", badge: "JACKET" },
+            // Анти-хит
+            { name: "❌ Убитая реплика", accent: "#ff0000", badge: "FAKE", isBomb: true }
         ];
-
-        // Загрузка картинок в память
-        const loadedImages = [];
-        itemSources.forEach(srcData => {
-            if (srcData.url) {
-                const img = new Image();
-                img.src = srcData.url;
-                loadedImages.push({ name: srcData.name, img: img, isBomb: srcData.isBomb });
-            } else {
-                loadedImages.push({ name: srcData.name, img: null, isBomb: srcData.isBomb });
-            }
-        });
 
         class Item {
             constructor() {
-                this.x = Math.random() * (canvas.width - 120) + 60;
-                this.y = canvas.height + 60;
+                this.x = Math.random() * (canvas.width - 170) + 85;
+                this.y = canvas.height + 70;
                 this.vx = (Math.random() - 0.5) * 6;
                 this.vy = -(Math.random() * 5 + 13);
                 this.gravity = 0.35;
-                this.size = 70;
-                
-                let randomSource = loadedImages[Math.floor(Math.random() * loadedImages.length)];
-                this.name = randomSource.name;
-                this.img = randomSource.img;
-                this.isBomb = randomSource.isBomb;
-                
+                this.data = itemTypes[Math.floor(Math.random() * itemTypes.length)];
+                this.width = 170;
+                this.height = 70;
                 this.sliced = false;
                 this.angle = 0;
                 this.vAngle = (Math.random() - 0.5) * 0.08;
@@ -161,40 +171,56 @@
                 ctx.translate(this.x, this.y);
                 ctx.rotate(this.angle);
 
-                if (this.img && this.img.complete && this.img.naturalWidth !== 0) {
-                    // Рисуем PNG картинку, если она загрузилась
-                    ctx.drawImage(this.img, -this.size/2, -this.size/2, this.size, this.size);
-                } else {
-                    // Стильная премиум-карточка с названием бренда, если картинка не указана
-                    ctx.beginPath();
-                    let w = 130;
-                    let h = 50;
-                    ctx.rect(-w/2, -h/2, w, h);
-                    ctx.fillStyle = this.isBomb ? 'rgba(255, 0, 0, 0.3)' : 'rgba(15, 15, 15, 0.9)';
-                    ctx.fill();
-                    ctx.lineWidth = 2;
-                    ctx.strokeStyle = this.isBomb ? '#ff0000' : '#ffffff';
-                    ctx.stroke();
+                // Отрисовка глянцевой карточки товара
+                ctx.beginPath();
+                let w = this.width;
+                let h = this.height;
+                let radius = 12;
+                
+                ctx.moveTo(-w/2 + radius, -h/2);
+                ctx.lineTo(w/2 - radius, -h/2);
+                ctx.quadraticCurveTo(w/2, -h/2, w/2, -h/2 + radius);
+                ctx.lineTo(w/2, h/2 - radius);
+                ctx.quadraticCurveTo(w/2, h/2, w/2 - radius, h/2);
+                ctx.lineTo(-w/2 + radius, h/2);
+                ctx.quadraticCurveTo(-w/2, h/2, -w/2, h/2 - radius);
+                ctx.lineTo(-w/2, -h/2 + radius);
+                ctx.quadraticCurveTo(-w/2, -h/2, -w/2 + radius, -h/2);
+                ctx.closePath();
 
-                    ctx.font = 'bold 15px -apple-system, sans-serif';
-                    ctx.fillStyle = '#ffffff';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(this.name, 0, 0);
-                }
+                ctx.fillStyle = this.data.isBomb ? 'rgba(255, 0, 0, 0.28)' : 'rgba(15, 15, 15, 0.94)';
+                ctx.fill();
+                
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = this.data.accent;
+                ctx.stroke();
+
+                // Бейдж категории
+                ctx.font = 'bold 10px -apple-system, sans-serif';
+                ctx.fillStyle = this.data.accent;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+                ctx.fillText(this.data.badge, 0, -h/2 + 8);
+
+                // Название вещи
+                ctx.font = 'bold 13px -apple-system, sans-serif';
+                ctx.fillStyle = '#ffffff';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.data.name, 0, 6);
 
                 ctx.restore();
             }
         }
 
         class Particle {
-            constructor(x, y, isBomb) {
+            constructor(x, y, color) {
                 this.x = x;
                 this.y = y;
                 this.vx = (Math.random() - 0.5) * 12;
                 this.vy = (Math.random() - 0.5) * 12;
                 this.alpha = 1;
-                this.color = isBomb ? '#ff0000' : '#ffffff';
+                this.color = color;
                 this.size = Math.random() * 6 + 3;
             }
             update() {
@@ -225,8 +251,8 @@
         function gameOver() {
             isPlaying = false;
             document.getElementById('startScreen').style.display = 'flex';
-            document.querySelector('#startScreen h1').innerText = "ИГРА ОКОНЧЕНА";
-            document.querySelector('#startScreen p').innerText = `Твой счет: ${score}`;
+            document.querySelector('#startScreen h1').innerText = "ПОЙМАЛ ПАЛЬ!";
+            document.querySelector('#startScreen p').innerText = `Твой итоговый счет: ${score}`;
         }
 
         function addTouch(x, y) {
@@ -237,15 +263,15 @@
             items.forEach(item => {
                 if (!item.sliced) {
                     let dist = Math.hypot(item.x - x, item.y - y);
-                    if (dist < 50) {
+                    if (dist < 70) {
                         item.sliced = true;
-                        if (item.isBomb) {
+                        if (item.data.isBomb) {
                             gameOver();
                         } else {
                             score += 10;
                             document.getElementById('score').innerText = score;
-                            for (let i = 0; i < 15; i++) {
-                                particles.push(new Particle(item.x, item.y, false));
+                            for (let i = 0; i < 18; i++) {
+                                particles.push(new Particle(item.x, item.y, item.data.accent));
                             }
                         }
                     }
@@ -266,7 +292,7 @@
 
             if (isPlaying) {
                 spawnTimer++;
-                if (spawnTimer > 55) {
+                if (spawnTimer > 40) {
                     items.push(new Item());
                     spawnTimer = 0;
                 }
@@ -278,7 +304,7 @@
 
                     if (!item.sliced && item.y > canvas.height + 100) {
                         items.splice(i, 1);
-                        if (!item.isBomb) {
+                        if (!item.data.isBomb) {
                             missed++;
                             document.getElementById('missed').innerText = missed;
                             if (missed >= 3) gameOver();
@@ -303,7 +329,7 @@
                 for (let i = 1; i < trail.length; i++) {
                     ctx.lineTo(trail[i].x, trail[i].y);
                 }
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
                 ctx.lineWidth = 4;
                 ctx.stroke();
             }
