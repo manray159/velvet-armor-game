@@ -5,19 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Velvet Armor — Slicer</title>
     <style>
-        body {
+        html, body {
             margin: 0;
             padding: 0;
+            width: 100%;
+            height: 100%;
             background: #030303;
             color: #fff;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             overflow: hidden;
+            position: fixed;
             touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
         #gameCanvas {
             display: block;
             background: #050505;
             cursor: crosshair;
+            width: 100%;
+            height: 100%;
         }
         #ui {
             position: absolute;
@@ -202,6 +209,13 @@
 </head>
 <body>
 
+    <!-- Жесткая блокировка скролла и закрытия вкладки свайпом -->
+    <script>
+        document.addEventListener('touchmove', function(e) {
+            e.preventDefault();
+        }, { passive: false });
+    </script>
+
     <div id="ui">
         <div class="score-box">СЧЕТ: <span id="score">0</span></div>
         <div class="score-box">ЖИЗНИ: <span id="lives">3</span> ❤️</div>
@@ -296,7 +310,7 @@
         let feverMode = false;
         let feverTimer = 0;
         let nextFeverScore = 500;
-        let freezeTimer = 0; // Заморозка времени
+        let freezeTimer = 0;
         let gridOffset = 0;
 
         let highscore = parseInt(localStorage.getItem('va_highscore') || '0');
@@ -461,14 +475,13 @@
 
         function showRules() {
             document.getElementById('mainMenu').classList.add('hidden');
-            document.getElementById('rulesScreen').classList.add('hidden');
+            document.getElementById('rulesScreen').classList.remove('hidden');
         }
 
         function contactAdmin() {
             window.location.href = "https://t.me/darkse11";
         }
 
-        // Подключаем файлы по порядку со скриншота GitHub
         const rawItems = [
             { file: "IMG_B6DA3E141F57-1.jpeg", isGold: false, isFreeze: false, isBomb: false },
             { file: "IMG_B6DA3E141F57-2.jpeg", isGold: false, isFreeze: false, isBomb: false },
@@ -478,8 +491,8 @@
             { file: "IMG_B6DA3E141F57-6.jpeg", isGold: false, isFreeze: false, isBomb: false },
             { file: "IMG_B6DA3E141F57-7.jpeg", isGold: false, isFreeze: false, isBomb: false },
             { file: "IMG_B6DA3E141F57-8.jpeg", isGold: false, isFreeze: false, isBomb: false },
-            { file: "IMG_B6DA3E141F57-9.jpeg", isGold: true,  isFreeze: false, isBomb: false }, // Золотой дроп
-            { file: "IMG_B6DA3E141F57-10.jpeg", isGold: false, isFreeze: true,  isBomb: false }  // 10-й файл переведен под часики заморозки
+            { file: "IMG_B6DA3E141F57-9.jpeg", isGold: true,  isFreeze: false, isBomb: false },
+            { file: "IMG_B6DA3E141F57-10.jpeg", isGold: false, isFreeze: true,  isBomb: false }
         ];
 
         const loadedItems = rawItems.map(item => {
@@ -507,7 +520,6 @@
                 } else if (rand < 0.15) {
                     this.data = loadedItems.find(i => i.isFreeze);
                 } else if (rand < 0.3) {
-                    // Паленка генерируется программно крестиком
                     this.data = { isBomb: true };
                 } else {
                     let normalItems = loadedItems.filter(i => !i.isGold && !i.isFreeze);
@@ -520,7 +532,7 @@
             }
 
             update() {
-                let m = freezeTimer > 0 ? 0.4 : 1; // Замедление при заморозке
+                let m = freezeTimer > 0 ? 0.4 : 1;
                 this.x += this.vx * m;
                 this.y += this.vy * m;
                 this.vy += this.gravity * m;
@@ -699,7 +711,7 @@
                             }
                         } else if (item.data.isFreeze) {
                             playSound('freeze');
-                            freezeTimer = 180; // 3 секунды заморозки
+                            freezeTimer = 180;
                             floatTexts.push(new FloatingText(item.x, item.y, "⏱️ FREEZE!", "#3498db"));
                             for (let i = 0; i < 15; i++) {
                                 particles.push(new Particle(item.x, item.y, "#3498db"));
@@ -744,7 +756,6 @@
         function animate() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Отрисовка киберпанк-неоновой сетки на фоне
             gridOffset = (gridOffset + (freezeTimer > 0 ? 0.5 : 1.5)) % 40;
             ctx.strokeStyle = feverMode ? "rgba(46, 204, 113, 0.08)" : "rgba(255, 255, 255, 0.03)";
             ctx.lineWidth = 1;
