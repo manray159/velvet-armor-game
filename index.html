@@ -227,29 +227,42 @@
         let highscore = localStorage.getItem('va_highscore') || 0;
         document.getElementById('lbBest').innerText = highscore + " очков";
 
-        // Простой синтезатор звуков через Web Audio API (без внешних файлов)
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playSound(type) {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            let osc = audioCtx.createOscillator();
-            let gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-
-            if (type === 'slice') {
-                osc.frequency.setValueAtTime(300, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1);
-                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
-            } else if (type === 'fake') {
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-                osc.frequency.linearRampToValueAtTime(50, audioCtx.currentTime + 0.3);
-                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+        // Надежный звуковой движок с разблокировкой по клику
+        let audioCtx = null;
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playSound(type) {
+            try {
+                initAudio();
+                if (!audioCtx) return;
+                
+                let osc = audioCtx.createOscillator();
+                let gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'slice') {
+                    osc.frequency.setValueAtTime(350, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(850, audioCtx.currentTime + 0.08);
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.08);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.08);
+                } else if (type === 'fake') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(140, audioCtx.currentTime);
+                    osc.frequency.linearRampToValueAtTime(40, audioCtx.currentTime + 0.3);
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+                }
+            } catch(e) {}
         }
 
         function showMenu() {
@@ -421,6 +434,7 @@
         }
 
         function startGame() {
+            initAudio(); // Разблокируем звук по клику на кнопку
             score = 0;
             lives = 3;
             combo = 0;
@@ -501,7 +515,6 @@
                             score += points;
                             document.getElementById('score').innerText = score;
                             
-                            // Эффект разлетающихся половинок и частиц
                             particles.push(new HalfPiece(item.x, item.y, item.data.color, true));
                             particles.push(new HalfPiece(item.x, item.y, item.data.color, false));
                             for (let i = 0; i < 12; i++) {
@@ -538,7 +551,7 @@
                     if (!item.sliced && item.y > canvas.height + 100) {
                         items.splice(i, 1);
                         if (!item.data.isBomb) {
-                            combo = 0; // Сброс комбо при промахе
+                            combo = 0;
                             lives--;
                             document.getElementById('lives').innerText = lives;
                             if (lives <= 0) gameOver();
