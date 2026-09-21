@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Velvet Armor — Slicer</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0b0b0b;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow: hidden;
+            touch-action: none;
+        }
+        #gameCanvas {
+            display: block;
+            background: radial-gradient(circle, #1a1a1a 0%, #050505 100%);
+            cursor: crosshair;
+        }
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+            font-size: 20px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        .score-box {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        #startScreen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(5, 5, 5, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+        h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+            letter-spacing: 2px;
+            text-align: center;
+        }
+        p {
+            color: #888;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+        .btn {
+            background: #fff;
+            color: #000;
+            border: none;
+            padding: 15px 40px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="ui">
+        <div class="score-box">СЧЕТ: <span id="score">0</span></div>
+        <div class="score-box">ПРАВЫХ: <span id="missed">0</span> / 3</div>
+    </div>
+
+    <div id="startScreen">
+        <h1>V / A — SLICER</h1>
+        <p>Режь топовый шмот, избегай бомб</p>
+        <button class="btn" onclick="startGame()">ИГРАТЬ</button>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        let score = 0;
+        let missed = 0;
+        let isPlaying = false;
+        let items = [];
+        let particles = [];
+        let trail = [];
+
+        // Список твоего шмота для нарезки
+        const itemTypes = [
+            { name: "Raf Simons Cylon", emoji: "⚡️", color: "#3498db" },
+            { name: "Raf Simons Antei", emoji: "🔥", color: "#e74c3c" },
+            { name: "Air Force 1", emoji: "👟", color: "#f1c40f" },
+            { name: "Air Jordan", emoji: "🏀", color: "#e67e22" },
+            { name: "Valentino", emoji: "🖤", color: "#9b59b6" },
+            { name: "⚡️ БОМБА", emoji: "💣", color: "#ff0000", isBomb: true }
+        ];
+
+        class Item {
+            constructor() {
+                this.x = Math.random() * (canvas.width - 100) + 50;
+                this.y = canvas.height + 50;
+                this.vx = (Math.random() - 0.5) * 6;
+                this.vy = -(Math.random() * 5 + 13);
+                this.gravity = 0.35;
+                this.radius = 45;
+                this.type = itemTypes[Math.floor(Math.random() * itemTypes.length)];
+                this.sliced = false;
+                this.angle = 0;
+                this.vAngle = (Math.random() - 0.5) * 0.1;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += this.gravity;
+                this.angle += this.vAngle;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+
+                ctx.beginPath();
+                ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.type.isBomb ? 'rgba(255, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.08)';
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = this.type.color;
+                ctx.stroke();
+
+                ctx.font = '32px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.type.emoji, 0, 0);
+
+                ctx.restore();
+            }
+        }
+
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 10;
+                this.vy = (Math.random() - 0.5) * 10;
+                this.alpha = 1;
+                this.color = color;
+                this.size = Math.random() * 5 + 2;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.alpha -= 0.03;
+            }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.alpha);
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y, this.size, this.size);
+                ctx.restore();
+            }
+        }
+
+        function startGame() {
+            score = 0;
+            missed = 0;
+            items = [];
+            particles = [];
+            isPlaying = true;
+            document.getElementById('score').innerText = score;
+            document.getElementById('missed').innerText = missed;
+            document.getElementById('startScreen').style.display = 'none';
+        }
+
+        function gameOver() {
+            isPlaying = false;
+            document.getElementById('startScreen').style.display = 'flex';
+            document.querySelector('#startScreen h1').innerText = "ИГРА ОКОНЧЕНА";
+            document.querySelector('#startScreen p').innerText = `Твой счет: ${score}`;
+        }
+
+        // Обработка свайпов / касаний мыши
+        function addTouch(x, y) {
+            trail.push({ x, y, time: Date.now() });
+
+            if (!isPlaying) return;
+
+            items.forEach(item => {
+                if (!item.sliced) {
+                    let dist = Math.hypot(item.x - x, item.y - y);
+                    if (dist < item.radius + 15) {
+                        item.sliced = true;
+                        if (item.type.isBomb) {
+                            gameOver();
+                        } else {
+                            score += 10;
+                            document.getElementById('score').innerText = score;
+                            for (let i = 0; i < 15; i++) {
+                                particles.push(new Particle(item.x, item.y, item.type.color));
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        window.addEventListener('mousemove', e => {
+            addTouch(e.clientX, e.clientY);
+        });
+
+        window.addEventListener('touchmove', e => {
+            let touch = e.touches[0];
+            addTouch(touch.clientX, touch.clientY);
+        });
+
+        let spawnTimer = 0;
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (isPlaying) {
+                spawnTimer++;
+                if (spawnTimer > 60) {
+                    items.push(new Item());
+                    spawnTimer = 0;
+                }
+
+                // Обновление и отрисовка шмоток
+                for (let i = items.length - 1; i >= 0; i--) {
+                    let item = items[i];
+                    item.update();
+                    item.draw();
+
+                    // Проверка на пропуск
+                    if (!item.sliced && item.y > canvas.height + 100) {
+                        items.splice(i, 1);
+                        if (!item.type.isBomb) {
+                            missed++;
+                            document.getElementById('missed').innerText = missed;
+                            if (missed >= 3) {
+                                gameOver();
+                            }
+                        }
+                    } else if (item.sliced) {
+                        items.splice(i, 1);
+                    }
+                }
+            }
+
+            // Отрисовка частиц
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update();
+                particles[i].draw();
+                if (particles[i].alpha <= 0) particles.splice(i, 1);
+            }
+
+            // Отрисовка следа от пальца/мышки
+            let now = Date.now();
+            trail = trail.filter(p => now - p.time < 150);
+            if (trail.length > 1) {
+                ctx.beginPath();
+                ctx.moveTo(trail[0].x, trail[0].y);
+                for (let i = 1; i < trail.length; i++) {
+                    ctx.lineTo(trail[i].x, trail[i].y);
+                }
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.lineWidth = 4;
+                ctx.stroke();
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
