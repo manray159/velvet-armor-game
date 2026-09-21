@@ -54,6 +54,20 @@
             opacity: 0;
             transition: opacity 0.2s;
         }
+        #feverPopup {
+            position: absolute;
+            top: 110px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 22px;
+            font-weight: 900;
+            color: #2ecc71;
+            text-shadow: 0 0 15px rgba(46, 204, 113, 0.7);
+            z-index: 6;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
         .screen {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -84,7 +98,7 @@
         .subtitle {
             color: #aaa;
             font-size: 13px;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             line-height: 1.4;
             max-width: 300px;
         }
@@ -94,8 +108,8 @@
             background: #141414;
             color: #fff;
             border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 14px 0;
-            font-size: 15px;
+            padding: 13px 0;
+            font-size: 14px;
             font-weight: 700;
             letter-spacing: 1px;
             border-radius: 12px;
@@ -109,13 +123,29 @@
             border: none;
             box-shadow: 0 4px 20px rgba(255,255,255,0.2);
         }
-        .menu-btn.share {
-            background: #2ecc71;
+        .menu-btn.admin {
+            background: #3498db;
             color: #fff;
             border: none;
         }
         .menu-btn:active {
             transform: scale(0.96);
+        }
+        .skin-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .skin-dot {
+            width: 30px; height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: 0.2s;
+        }
+        .skin-dot.active {
+            border-color: #fff;
+            transform: scale(1.15);
         }
         .hidden {
             display: none !important;
@@ -126,23 +156,23 @@
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 12px;
-            padding: 14px;
-            margin-bottom: 25px;
+            padding: 12px;
+            margin-bottom: 20px;
             box-sizing: border-box;
             text-align: left;
         }
         .lb-row {
             display: flex;
             justify-content: space-between;
-            font-size: 14px;
-            padding: 6px 0;
+            font-size: 13px;
+            padding: 5px 0;
             border-bottom: 1px solid rgba(255,255,255,0.05);
             color: #ccc;
         }
         .lb-row:last-child { border-bottom: none; }
         .lb-row span:last-child { font-weight: bold; color: #fff; }
         .promo-card {
-            margin-top: 15px;
+            margin-top: 12px;
             padding: 10px 14px;
             background: rgba(46, 204, 113, 0.1);
             border: 1px dashed #2ecc71;
@@ -159,13 +189,21 @@
         <div class="score-box">ЖИЗНИ: <span id="lives">3</span> ❤️</div>
     </div>
     <div id="comboPopup">COMBO x2! 🔥</div>
+    <div id="feverPopup">⭐ BLACK FRIDAY FEVER! ⭐</div>
 
     <!-- ГЛАВНОЕ МЕНЮ -->
     <div id="mainMenu" class="screen">
         <div class="logo-tag">VELVET ARMOR STORE</div>
         <h1>SLICER</h1>
-        <div class="subtitle">Режь шмот, лови золотые лимитки, избегай паленки!<br>Копи очки — забирай реальные скидки!</div>
+        <div class="subtitle">Выбери стиль лезвия и разнеси шмот!</div>
         
+        <div class="skin-selector">
+            <div class="skin-dot active" style="background:#ffffff;" onclick="setSkin('#ffffff', this)" title="Классика"></div>
+            <div class="skin-dot" style="background:#2ecc71;" onclick="setSkin('#2ecc71', this)" title="Stone Island Неон"></div>
+            <div class="skin-dot" style="background:#f1c40f;" onclick="setSkin('#f1c40f', this)" title="Золотой"></div>
+            <div class="skin-dot" style="background:#e74c3c;" onclick="setSkin('#e74c3c', this)" title="Огненный"></div>
+        </div>
+
         <button class="menu-btn primary" onclick="startGame()">⚡️ ИГРАТЬ</button>
         <button class="menu-btn" onclick="showLeaderboard()">🏆 ТАБЛИЦА ЛИДЕРОВ</button>
         <button class="menu-btn" onclick="showRules()">📜 ПРАВИЛА И СКИДКИ</button>
@@ -192,8 +230,8 @@
             • <b>1 000 очков</b> = Скидка 1% (VA-1PRO)<br>
             • <b>2 000 очков</b> = Скидка 2% (VA-2PRO)<br>
             • <b>3 000+ очков</b> = Скидка 3% (макс. 3%, VA-3PRO)<br><br>
-            🌟 <i>Золотые вещи дают сразу +50 очков!</i><br>
-            🔥 <i>Серия из 3+ шмоток включает COMBO х2!</i><br>
+            ⭐ <i>Золотые лимитки дают +50 очков!</i><br>
+            🔥 <i>Black Friday Fever каждые 500 очков (х3 очков без паленки)!</i><br>
             ❌ <i>Убитая реплика завершает игру!</i>
         </div>
         <button class="menu-btn primary" onclick="showMenu()">« НАЗАД В МЕНЮ</button>
@@ -206,7 +244,7 @@
         <div class="promo-card hidden" id="promoBlock"></div>
         <br>
         <button class="menu-btn primary" onclick="startGame()">ИГРАТЬ СНОВА</button>
-        <button class="menu-btn share" onclick="shareScore()">📤 ПОДЕЛИТЬСЯ В ЧАТ</button>
+        <button class="menu-btn admin" onclick="contactAdmin()">💬 НАПИСАТЬ АДМИНУ</button>
         <button class="menu-btn" onclick="showMenu()">В ГЛАВНОЕ МЕНЮ</button>
     </div>
 
@@ -227,13 +265,26 @@
         let lives = 3;
         let combo = 0;
         let isPlaying = false;
+        let currentSkin = 'rgba(255, 255, 255, 0.9)';
         let items = [];
         let particles = [];
         let floatTexts = [];
         let trail = [];
+        let feverMode = false;
+        let feverTimer = 0;
+        let nextFeverScore = 500;
 
         let highscore = localStorage.getItem('va_highscore') || 0;
         document.getElementById('lbBest').innerText = highscore + " очков";
+
+        function setSkin(color, el) {
+            document.querySelectorAll('.skin-dot').forEach(d => d.classList.remove('active'));
+            el.classList.add('active');
+            if(color === '#ffffff') currentSkin = 'rgba(255, 255, 255, 0.9)';
+            if(color === '#2ecc71') currentSkin = 'rgba(46, 204, 113, 0.95)';
+            if(color === '#f1c40f') currentSkin = 'rgba(241, 196, 15, 0.95)';
+            if(color === '#e74c3c') currentSkin = 'rgba(231, 76, 60, 0.95)';
+        }
 
         let audioCtx = null;
         function initAudio() {
@@ -293,16 +344,11 @@
 
         function showRules() {
             document.getElementById('mainMenu').classList.add('hidden');
-            document.getElementById('rulesScreen').classList.add('hidden');
+            document.getElementById('rulesScreen').classList.remove('hidden');
         }
 
-        function shareScore() {
-            let text = `⚡️ Я набил ${score} очков в мини-гре Velvet Armor Slicer и выбил скидку! Попробуй побить мой рекорд!`;
-            if (navigator.share) {
-                navigator.share({ title: 'Velvet Armor Slicer', text: text, url: window.location.href });
-            } else {
-                prompt("Скопируй результат и отправь друзьям:", text);
-            }
+        function contactAdmin() {
+            window.location.href = "https://t.me/darkse11";
         }
 
         const itemTypes = [
@@ -322,13 +368,17 @@
             constructor() {
                 this.x = Math.random() * (canvas.width - 160) + 80;
                 this.y = canvas.height + 80;
+                let speedMult = 1 + (score / 1500); // Усложнение по мере роста очков
                 this.vx = (Math.random() - 0.5) * 6;
-                this.vy = -(Math.random() * 5 + 13.5);
+                this.vy = -(Math.random() * 5 + 13.5) * Math.min(speedMult, 1.4);
                 this.gravity = 0.35;
                 
-                // Шанс выпадения золотого шмота (примерно 1 из 10)
                 let rand = Math.random();
-                if (rand < 0.1) {
+                if (feverMode) {
+                    // В режиме Лихорадки только нормальный и золотой шмот
+                    let cleanItems = itemTypes.filter(i => !i.isBomb);
+                    this.data = cleanItems[Math.floor(Math.random() * cleanItems.length)];
+                } else if (rand < 0.1) {
                     this.data = itemTypes.find(i => i.isGold);
                 } else if (rand < 0.3) {
                     this.data = itemTypes.find(i => i.isBomb);
@@ -393,7 +443,6 @@
                     ctx.fill();
                     ctx.stroke();
                 } else if (this.data.kind === "gold") {
-                    // Золотая лимитка
                     ctx.beginPath();
                     ctx.arc(0, 0, 36, 0, Math.PI * 2);
                     ctx.fillStyle = "rgba(255, 215, 0, 0.3)";
@@ -437,17 +486,11 @@
 
         class FloatingText {
             constructor(x, y, text, color) {
-                this.x = x;
-                this.y = y;
-                this.text = text;
-                this.color = color;
-                this.alpha = 1;
-                this.vy = -2;
+                this.x = x; this.y = y;
+                this.text = text; this.color = color;
+                this.alpha = 1; this.vy = -2;
             }
-            update() {
-                this.y += this.vy;
-                this.alpha -= 0.035;
-            }
+            update() { this.y += this.vy; this.alpha -= 0.035; }
             draw() {
                 ctx.save();
                 ctx.globalAlpha = Math.max(0, this.alpha);
@@ -510,6 +553,8 @@
             items = [];
             particles = [];
             floatTexts = [];
+            feverMode = false;
+            nextFeverScore = 500;
             isPlaying = true;
             document.getElementById('score').innerText = score;
             document.getElementById('lives').innerText = lives;
@@ -519,10 +564,10 @@
             document.getElementById('ui').style.display = 'flex';
         }
 
-        function triggerComboPopup() {
-            let popup = document.getElementById('comboPopup');
-            popup.style.opacity = '1';
-            setTimeout(() => { popup.style.opacity = '0'; }, 600);
+        function triggerPopup(elementId) {
+            let el = document.getElementById(elementId);
+            el.style.opacity = '1';
+            setTimeout(() => { el.style.opacity = '0'; }, 700);
         }
 
         function gameOver() {
@@ -576,21 +621,22 @@
                             gameOver();
                         } else if (item.data.isGold) {
                             playSound('gold');
-                            score += 50;
+                            let mult = feverMode ? 3 : 1;
+                            score += 50 * mult;
                             document.getElementById('score').innerText = score;
-                            floatTexts.push(new FloatingText(item.x, item.y, "+50 GOLD!", "#ffd700"));
+                            floatTexts.push(new FloatingText(item.x, item.y, `+${50*mult} GOLD!`, "#ffd700"));
                             for (let i = 0; i < 20; i++) {
                                 particles.push(new Particle(item.x, item.y, "#ffd700"));
                             }
                         } else {
                             playSound('slice');
                             combo++;
-                            let points = 10;
-                            let txt = "+10";
-                            if (combo >= 3) {
+                            let points = feverMode ? 30 : 10;
+                            let txt = feverMode ? "+30 FEVER" : "+10";
+                            if (combo >= 3 && !feverMode) {
                                 points = 20;
                                 txt = "+20 COMBO";
-                                triggerComboPopup();
+                                triggerPopup('comboPopup');
                             }
                             score += points;
                             document.getElementById('score').innerText = score;
@@ -600,6 +646,14 @@
                             particles.push(new HalfPiece(item.x, item.y, item.data.color, false));
                             for (let i = 0; i < 12; i++) {
                                 particles.push(new Particle(item.x, item.y, item.data.color));
+                            }
+
+                            // Проверка активации лихорадки Black Friday
+                            if (score >= nextFeverScore && !feverMode) {
+                                feverMode = true;
+                                feverTimer = 250; // Длительность лихорадки
+                                triggerPopup('feverPopup');
+                                nextFeverScore += 500;
                             }
                         }
                     }
@@ -618,8 +672,14 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             if (isPlaying) {
+                if (feverMode) {
+                    feverTimer--;
+                    if (feverTimer <= 0) feverMode = false;
+                }
+
                 spawnTimer++;
-                if (spawnTimer > 36) {
+                let spawnInterval = feverMode ? 22 : 36;
+                if (spawnTimer > spawnInterval) {
                     items.push(new Item());
                     spawnTimer = 0;
                 }
@@ -663,7 +723,7 @@
                 for (let i = 1; i < trail.length; i++) {
                     ctx.lineTo(trail[i].x, trail[i].y);
                 }
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.strokeStyle = currentSkin;
                 ctx.lineWidth = 5;
                 ctx.stroke();
             }
