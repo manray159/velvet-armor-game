@@ -456,28 +456,23 @@
             window.location.href = "https://t.me/darkse11";
         }
 
-        // ==========================================
-        // БАЗА КАРТИНОК (ПРОПИШИ ИМЕНА СВОИХ ФАЙЛОВ С ГИТХАБА)
-        // ==========================================
+        // Подключаем твои файлы по порядку со скриншота GitHub
         const rawItems = [
-            { file: "stone.png", isGold: false, isBomb: false },
-            { file: "valentino.png", isGold: false, isBomb: false },
-            { file: "gucci.png", isGold: false, isBomb: false },
-            { file: "raf.png", isGold: false, isBomb: false },
-            { file: "rick.png", isGold: false, isBomb: false },
-            { file: "offwhite.png", isGold: false, isBomb: false },
-            { file: "olimpika.png", isGold: false, isBomb: false },
-            { file: "margiela.png", isGold: false, isBomb: false },
-            { file: "gold_drop.png", isGold: true, isBomb: false },
-            { file: "fake_bomb.png", isGold: false, isBomb: true }
+            { file: "IMG_B6DA3E141F57-1.jpeg", isGold: false, isBomb: false },
+            { file: "IMG_B6DA3E141F57-2.jpeg", isGold: false, isBomb: false },
+            { file: "IMG_B6DA3E141F57-3.jpeg", isGold: false, isBomb: false },
+            { file: "IMG_B6DA3E141F57-4.jpeg", isGold: false, isBomb: false },
+            { file: "IMG_B6DA3E141F57-5.jpeg", isGold: false, isBomb: false },
+            { file: "IMG_B6DA3E141F57-6.jpeg", isGold: false, isBomb: false },
+            { file: "IMG_B6DA3E141F57-7.jpeg", isGold: false, isBomb: false },
+            { file: "IMG_B6DA3E141F57-8.jpeg", isGold: false, isBomb: false },
+            { file: "IMG_B6DA3E141F57-9.jpeg", isGold: true,  isBomb: false }, // Золотой дроп
+            { file: "IMG_B6DA3E141F57-10.jpeg", isGold: false, isBomb: true }  // Бомба-паленка
         ];
 
-        // Автоматическая предзагрузка картинок в память
         const loadedItems = rawItems.map(item => {
             const img = new Image();
-            if (!item.isBomb) {
-                img.src = item.file; // Имя файла, как на GitHub
-            }
+            img.src = item.file;
             return { ...item, img: img };
         });
 
@@ -489,7 +484,7 @@
                 this.vx = (Math.random() - 0.5) * 6;
                 this.vy = -(Math.random() * 5 + 13.5) * Math.min(speedMult, 1.4);
                 this.gravity = 0.35;
-                this.size = 85; // Размер картинки на экране
+                this.size = 85;
                 
                 let rand = Math.random();
                 if (feverMode) {
@@ -522,7 +517,6 @@
                 ctx.rotate(this.angle);
 
                 if (this.data.isBomb) {
-                    // Рисуем крест паленки, если нет отдельной картинки бомбы
                     ctx.beginPath();
                     ctx.arc(0, 0, 38, 0, Math.PI * 2);
                     ctx.fillStyle = "rgba(255, 0, 0, 0.25)";
@@ -536,7 +530,6 @@
                     ctx.textBaseline = 'middle';
                     ctx.fillText("❌", 0, 0);
                 } else {
-                    // Рисуем стильную круглую подложку под чистую картинку шмотки
                     ctx.beginPath();
                     ctx.arc(0, 0, this.size / 2 + 4, 0, Math.PI * 2);
                     ctx.fillStyle = "rgba(15, 15, 15, 0.85)";
@@ -545,7 +538,6 @@
                     ctx.strokeStyle = this.data.isGold ? "#ffd700" : "rgba(255, 255, 255, 0.2)";
                     ctx.stroke();
 
-                    // Обрезаем изображение по кругу для идеального вида
                     ctx.save();
                     ctx.beginPath();
                     ctx.arc(0, 0, this.size / 2, 0, Math.PI * 2);
