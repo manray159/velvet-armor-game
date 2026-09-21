@@ -84,7 +84,7 @@
         .subtitle {
             color: #aaa;
             font-size: 13px;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
             line-height: 1.4;
             max-width: 300px;
         }
@@ -101,13 +101,18 @@
             border-radius: 12px;
             cursor: pointer;
             transition: 0.2s;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
         .menu-btn.primary {
             background: #fff;
             color: #000;
             border: none;
             box-shadow: 0 4px 20px rgba(255,255,255,0.2);
+        }
+        .menu-btn.share {
+            background: #2ecc71;
+            color: #fff;
+            border: none;
         }
         .menu-btn:active {
             transform: scale(0.96);
@@ -159,7 +164,7 @@
     <div id="mainMenu" class="screen">
         <div class="logo-tag">VELVET ARMOR STORE</div>
         <h1>SLICER</h1>
-        <div class="subtitle">Режь шмот без промахов для комбо-очков.<br>Копи очки — забирай реальные скидки!</div>
+        <div class="subtitle">Режь шмот, лови золотые лимитки, избегай паленки!<br>Копи очки — забирай реальные скидки!</div>
         
         <button class="menu-btn primary" onclick="startGame()">⚡️ ИГРАТЬ</button>
         <button class="menu-btn" onclick="showLeaderboard()">🏆 ТАБЛИЦА ЛИДЕРОВ</button>
@@ -184,11 +189,12 @@
         <div class="logo-tag">ИНФОРМАЦИЯ</div>
         <h1>БОНУСЫ</h1>
         <div class="subtitle" style="text-align: left; margin-bottom: 25px;">
-            • <b>1 000 очков</b> = Скидка 1% (промокод VA-1PRO)<br>
-            • <b>2 000 очков</b> = Скидка 2% (промокод VA-2PRO)<br>
+            • <b>1 000 очков</b> = Скидка 1% (VA-1PRO)<br>
+            • <b>2 000 очков</b> = Скидка 2% (VA-2PRO)<br>
             • <b>3 000+ очков</b> = Скидка 3% (макс. 3%, VA-3PRO)<br><br>
-            🔥 <i>Режь подряд без промахов, чтобы активировать COMBO-очки!</i><br>
-            ❌ <i>Режешь «Убитую реплику» — игра завершается!</i>
+            🌟 <i>Золотые вещи дают сразу +50 очков!</i><br>
+            🔥 <i>Серия из 3+ шмоток включает COMBO х2!</i><br>
+            ❌ <i>Убитая реплика завершает игру!</i>
         </div>
         <button class="menu-btn primary" onclick="showMenu()">« НАЗАД В МЕНЮ</button>
     </div>
@@ -200,6 +206,7 @@
         <div class="promo-card hidden" id="promoBlock"></div>
         <br>
         <button class="menu-btn primary" onclick="startGame()">ИГРАТЬ СНОВА</button>
+        <button class="menu-btn share" onclick="shareScore()">📤 ПОДЕЛИТЬСЯ В ЧАТ</button>
         <button class="menu-btn" onclick="showMenu()">В ГЛАВНОЕ МЕНЮ</button>
     </div>
 
@@ -222,12 +229,12 @@
         let isPlaying = false;
         let items = [];
         let particles = [];
+        let floatTexts = [];
         let trail = [];
 
         let highscore = localStorage.getItem('va_highscore') || 0;
         document.getElementById('lbBest').innerText = highscore + " очков";
 
-        // Надежный звуковой движок с разблокировкой по клику
         let audioCtx = null;
         function initAudio() {
             if (!audioCtx) {
@@ -242,7 +249,6 @@
             try {
                 initAudio();
                 if (!audioCtx) return;
-                
                 let osc = audioCtx.createOscillator();
                 let gain = audioCtx.createGain();
                 osc.connect(gain);
@@ -254,6 +260,12 @@
                     gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
                     gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.08);
                     osc.start(); osc.stop(audioCtx.currentTime + 0.08);
+                } else if (type === 'gold') {
+                    osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.2);
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.2);
                 } else if (type === 'fake') {
                     osc.type = 'sawtooth';
                     osc.frequency.setValueAtTime(140, audioCtx.currentTime);
@@ -281,7 +293,16 @@
 
         function showRules() {
             document.getElementById('mainMenu').classList.add('hidden');
-            document.getElementById('rulesScreen').classList.remove('hidden');
+            document.getElementById('rulesScreen').classList.add('hidden');
+        }
+
+        function shareScore() {
+            let text = `⚡️ Я набил ${score} очков в мини-гре Velvet Armor Slicer и выбил скидку! Попробуй побить мой рекорд!`;
+            if (navigator.share) {
+                navigator.share({ title: 'Velvet Armor Slicer', text: text, url: window.location.href });
+            } else {
+                prompt("Скопируй результат и отправь друзьям:", text);
+            }
         }
 
         const itemTypes = [
@@ -293,6 +314,7 @@
             { name: "Off-White Hoodie", color: "#e74c3c", kind: "hoodie" },
             { name: "Olimpika Zip", color: "#2ecc71", kind: "zip" },
             { name: "Maison Margiela", color: "#e84393", kind: "sneaker" },
+            { name: "⭐ GOLDEN DROP", color: "#ffd700", kind: "gold", isGold: true },
             { name: "❌ Убитая реплика", color: "#ff0000", kind: "fake", isBomb: true }
         ];
 
@@ -303,7 +325,18 @@
                 this.vx = (Math.random() - 0.5) * 6;
                 this.vy = -(Math.random() * 5 + 13.5);
                 this.gravity = 0.35;
-                this.data = itemTypes[Math.floor(Math.random() * itemTypes.length)];
+                
+                // Шанс выпадения золотого шмота (примерно 1 из 10)
+                let rand = Math.random();
+                if (rand < 0.1) {
+                    this.data = itemTypes.find(i => i.isGold);
+                } else if (rand < 0.3) {
+                    this.data = itemTypes.find(i => i.isBomb);
+                } else {
+                    let normalItems = itemTypes.filter(i => !i.isGold && !i.isBomb);
+                    this.data = normalItems[Math.floor(Math.random() * normalItems.length)];
+                }
+
                 this.sliced = false;
                 this.angle = 0;
                 this.vAngle = (Math.random() - 0.5) * 0.08;
@@ -323,7 +356,7 @@
 
                 ctx.strokeStyle = this.data.color;
                 ctx.fillStyle = this.data.color;
-                ctx.lineWidth = 3;
+                ctx.lineWidth = this.data.isGold ? 4 : 3;
 
                 if (this.data.kind === "sneaker") {
                     ctx.beginPath();
@@ -359,6 +392,17 @@
                     ctx.fillStyle = "rgba(15, 15, 15, 0.95)";
                     ctx.fill();
                     ctx.stroke();
+                } else if (this.data.kind === "gold") {
+                    // Золотая лимитка
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 36, 0, Math.PI * 2);
+                    ctx.fillStyle = "rgba(255, 215, 0, 0.3)";
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.font = 'bold 22px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText("⭐", 0, 0);
                 } else if (this.data.kind === "fake") {
                     ctx.beginPath();
                     ctx.arc(0, 0, 34, 0, Math.PI * 2);
@@ -373,35 +417,60 @@
                     ctx.fillText("❌", 0, 0);
                 }
 
-                if (this.data.kind !== "fake") {
+                if (this.data.kind !== "fake" && this.data.kind !== "gold") {
                     ctx.font = 'bold 11px -apple-system, sans-serif';
                     ctx.fillStyle = '#ffffff';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'top';
                     ctx.fillText(this.data.name, 0, 35);
+                } else if (this.data.kind === "gold") {
+                    ctx.font = 'bold 12px -apple-system, sans-serif';
+                    ctx.fillStyle = '#ffd700';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'top';
+                    ctx.fillText("GOLDEN DROP", 0, 40);
                 }
 
                 ctx.restore();
             }
         }
 
-        class HalfPiece {
-            constructor(x, y, color, isLeft) {
+        class FloatingText {
+            constructor(x, y, text, color) {
                 this.x = x;
                 this.y = y;
+                this.text = text;
+                this.color = color;
+                this.alpha = 1;
+                this.vy = -2;
+            }
+            update() {
+                this.y += this.vy;
+                this.alpha -= 0.035;
+            }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.alpha);
+                ctx.font = 'bold 18px -apple-system, sans-serif';
+                ctx.fillStyle = this.color;
+                ctx.textAlign = 'center';
+                ctx.fillText(this.text, this.x, this.y);
+                ctx.restore();
+            }
+        }
+
+        class HalfPiece {
+            constructor(x, y, color, isLeft) {
+                this.x = x; this.y = y;
                 this.vx = isLeft ? - (Math.random() * 4 + 2) : (Math.random() * 4 + 2);
                 this.vy = -(Math.random() * 3 + 2);
                 this.gravity = 0.4;
-                this.alpha = 1;
-                this.color = color;
-                this.angle = 0;
-                this.vAngle = isLeft ? -0.1 : 0.1;
+                this.alpha = 1; this.color = color;
+                this.angle = 0; this.vAngle = isLeft ? -0.1 : 0.1;
             }
             update() {
-                this.x += this.vx;
-                this.y += this.vy;
-                this.vy += this.gravity;
-                this.angle += this.vAngle;
+                this.x += this.vx; this.y += this.vy;
+                this.vy += this.gravity; this.angle += this.vAngle;
                 this.alpha -= 0.03;
             }
             draw() {
@@ -434,12 +503,13 @@
         }
 
         function startGame() {
-            initAudio(); // Разблокируем звук по клику на кнопку
+            initAudio();
             score = 0;
             lives = 3;
             combo = 0;
             items = [];
             particles = [];
+            floatTexts = [];
             isPlaying = true;
             document.getElementById('score').innerText = score;
             document.getElementById('lives').innerText = lives;
@@ -504,16 +574,27 @@
                             lives = 0;
                             document.getElementById('lives').innerText = lives;
                             gameOver();
+                        } else if (item.data.isGold) {
+                            playSound('gold');
+                            score += 50;
+                            document.getElementById('score').innerText = score;
+                            floatTexts.push(new FloatingText(item.x, item.y, "+50 GOLD!", "#ffd700"));
+                            for (let i = 0; i < 20; i++) {
+                                particles.push(new Particle(item.x, item.y, "#ffd700"));
+                            }
                         } else {
                             playSound('slice');
                             combo++;
                             let points = 10;
+                            let txt = "+10";
                             if (combo >= 3) {
                                 points = 20;
+                                txt = "+20 COMBO";
                                 triggerComboPopup();
                             }
                             score += points;
                             document.getElementById('score').innerText = score;
+                            floatTexts.push(new FloatingText(item.x, item.y, txt, item.data.color));
                             
                             particles.push(new HalfPiece(item.x, item.y, item.data.color, true));
                             particles.push(new HalfPiece(item.x, item.y, item.data.color, false));
@@ -538,7 +619,7 @@
 
             if (isPlaying) {
                 spawnTimer++;
-                if (spawnTimer > 38) {
+                if (spawnTimer > 36) {
                     items.push(new Item());
                     spawnTimer = 0;
                 }
@@ -566,6 +647,12 @@
                 particles[i].update();
                 particles[i].draw();
                 if (particles[i].alpha <= 0) particles.splice(i, 1);
+            }
+
+            for (let i = floatTexts.length - 1; i >= 0; i--) {
+                floatTexts[i].update();
+                floatTexts[i].draw();
+                if (floatTexts[i].alpha <= 0) floatTexts.splice(i, 1);
             }
 
             let now = Date.now();
