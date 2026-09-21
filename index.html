@@ -4,15 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Velvet Armor — Slicer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;900&display=swap" rel="stylesheet">
     <style>
         body {
             margin: 0;
             padding: 0;
             background: #030303;
             color: #fff;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Montserrat', -apple-system, sans-serif;
             overflow: hidden;
             touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
         #gameCanvas {
             display: block;
@@ -21,34 +24,56 @@
         }
         #ui {
             position: absolute;
-            top: 20px;
-            left: 20px;
-            right: 20px;
+            top: 15px;
+            left: 15px;
+            right: 15px;
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
+            gap: 8px;
             pointer-events: none;
-            font-size: 16px;
-            font-weight: 800;
-            letter-spacing: 1.5px;
             z-index: 5;
             display: none;
         }
+        .ui-top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
         .score-box {
-            background: rgba(20, 20, 20, 0.85);
+            background: rgba(18, 18, 18, 0.75);
             padding: 8px 14px;
-            border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            font-variant-numeric: tabular-nums;
+        }
+        /* Шкала прогресса скидки сверху */
+        .progress-bar-container {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            transition: width 0.3s ease;
         }
         #comboPopup {
             position: absolute;
-            top: 70px;
+            top: 85px;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 900;
             color: #f1c40f;
-            text-shadow: 0 0 10px rgba(241, 196, 15, 0.5);
+            text-shadow: 0 0 12px rgba(241, 196, 15, 0.6);
             z-index: 6;
             pointer-events: none;
             opacity: 0;
@@ -56,13 +81,13 @@
         }
         #feverPopup {
             position: absolute;
-            top: 110px;
+            top: 120px;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 22px;
+            font-size: 20px;
             font-weight: 900;
             color: #2ecc71;
-            text-shadow: 0 0 15px rgba(46, 204, 113, 0.7);
+            text-shadow: 0 0 15px rgba(46, 204, 113, 0.8);
             z-index: 6;
             pointer-events: none;
             opacity: 0;
@@ -71,7 +96,8 @@
         .screen {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(4, 4, 4, 0.98);
+            background: rgba(4, 4, 4, 0.96);
+            backdrop-filter: blur(20px);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -80,51 +106,65 @@
             padding: 24px;
             box-sizing: border-box;
             text-align: center;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.97); }
+            to { opacity: 1; transform: scale(1); }
         }
         .logo-tag {
-            font-size: 11px;
-            letter-spacing: 4px;
-            color: #777;
-            margin-bottom: 6px;
+            font-size: 10px;
+            letter-spacing: 5px;
+            color: #888;
+            margin-bottom: 8px;
             text-transform: uppercase;
+            font-weight: 700;
         }
         h1 {
-            font-size: 30px;
+            font-size: 28px;
             margin: 0 0 8px 0;
-            letter-spacing: 3px;
+            letter-spacing: 2px;
             color: #fff;
             font-weight: 900;
         }
         .subtitle {
-            color: #999;
-            font-size: 13px;
-            margin-bottom: 20px;
-            line-height: 1.4;
-            max-width: 300px;
+            color: #aaa;
+            font-size: 12px;
+            margin-bottom: 24px;
+            line-height: 1.5;
+            max-width: 280px;
         }
         .menu-btn {
             width: 100%;
             max-width: 260px;
-            background: #141414;
+            background: #121212;
             color: #fff;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 13px 0;
-            font-size: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 14px 0;
+            font-size: 13px;
             font-weight: 700;
             letter-spacing: 1px;
-            border-radius: 12px;
+            border-radius: 14px;
             cursor: pointer;
-            transition: 0.2s;
+            transition: all 0.2s;
             margin-bottom: 10px;
+            font-family: 'Montserrat', sans-serif;
+        }
+        .menu-btn:hover {
+            background: #1a1a1a;
+            border-color: rgba(255, 255, 255, 0.3);
         }
         .menu-btn.primary {
             background: #fff;
             color: #000;
             border: none;
-            box-shadow: 0 4px 20px rgba(255,255,255,0.2);
+            box-shadow: 0 4px 20px rgba(255,255,255,0.15);
+        }
+        .menu-btn.primary:hover {
+            background: #f0f0f0;
         }
         .menu-btn.admin {
-            background: #3498db;
+            background: #2575fc;
             color: #fff;
             border: none;
         }
@@ -138,32 +178,35 @@
             width: 100%;
             max-width: 280px;
             margin-bottom: 20px;
-            max-height: 250px;
+            max-height: 240px;
             overflow-y: auto;
+            padding-right: 4px;
         }
         .shop-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             padding: 10px 14px;
-            border-radius: 10px;
-            font-size: 13px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
         }
         .shop-item.selected {
             border-color: #2ecc71;
-            background: rgba(46, 204, 113, 0.08);
+            background: rgba(46, 204, 113, 0.06);
         }
         .shop-btn {
             background: #fff;
             color: #000;
             border: none;
             padding: 6px 12px;
-            border-radius: 6px;
-            font-weight: bold;
+            border-radius: 8px;
+            font-weight: 700;
             cursor: pointer;
-            font-size: 11px;
+            font-size: 10px;
+            font-family: 'Montserrat', sans-serif;
         }
         .hidden {
             display: none !important;
@@ -173,7 +216,7 @@
             max-width: 280px;
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 12px;
+            border-radius: 14px;
             padding: 12px;
             margin-bottom: 20px;
             box-sizing: border-box;
@@ -182,29 +225,35 @@
         .lb-row {
             display: flex;
             justify-content: space-between;
-            font-size: 13px;
-            padding: 5px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            color: #ccc;
+            font-size: 12px;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            color: #bbb;
         }
         .lb-row:last-child { border-bottom: none; }
-        .lb-row span:last-child { font-weight: bold; color: #fff; }
+        .lb-row span:last-child { font-weight: 700; color: #fff; }
         .promo-card {
             margin-top: 12px;
-            padding: 10px 14px;
-            background: rgba(46, 204, 113, 0.1);
+            padding: 12px 16px;
+            background: rgba(46, 204, 113, 0.08);
             border: 1px dashed #2ecc71;
-            border-radius: 8px;
+            border-radius: 12px;
             color: #2ecc71;
             font-size: 12px;
+            font-weight: 600;
         }
     </style>
 </head>
 <body>
 
     <div id="ui">
-        <div class="score-box">СЧЕТ: <span id="score">0</span></div>
-        <div class="score-box">ЖИЗНИ: <span id="lives">3</span> ❤️</div>
+        <div class="ui-top-row">
+            <div class="score-box">СЧЕТ: <span id="score">0</span></div>
+            <div class="score-box">ЖИЗНИ: <span id="lives">3</span> ❤️</div>
+        </div>
+        <div class="progress-bar-container">
+            <div class="progress-bar-fill" id="progressBar"></div>
+        </div>
     </div>
     <div id="comboPopup">COMBO x2! 🔥</div>
     <div id="feverPopup">⭐ BLACK FRIDAY FEVER! ⭐</div>
@@ -213,17 +262,17 @@
     <div id="mainMenu" class="screen">
         <div class="logo-tag">VELVET ARMOR STORE</div>
         <h1>SLICER</h1>
-        <div class="subtitle">Киберпанк-аркада с твоим шмотом</div>
+        <div class="subtitle">Премиальная мини-игра. Режь мерч, копи очки и забирай скидки.</div>
         
         <button class="menu-btn primary" onclick="startGame()">⚡️ ИГРАТЬ</button>
-        <button class="menu-btn" onclick="showShop()">🛒 МАГАЗИН ЛЕЗВИЙ</button>
-        <button class="menu-btn" onclick="showLeaderboard()">🏆 ТАБЛИЦА ЛИДЕРОВ</button>
+        <button class="menu-btn" onclick="showShop()">🛒 АРСЕНАЛ ЛЕЗВИЙ</button>
+        <button class="menu-btn" onclick="showLeaderboard()">🏆 РЕЙТИНГ</button>
         <button class="menu-btn" onclick="showRules()">📜 ПРАВИЛА И СКИДКИ</button>
     </div>
 
     <!-- МАГАЗИН ЛЕЗВИЙ -->
     <div id="shopScreen" class="screen hidden">
-        <div class="logo-tag">АРСЕНАЛ</div>
+        <div class="logo-tag">КАСТОМИЗАЦИЯ</div>
         <h1>МАГАЗИН</h1>
         <div class="subtitle">Рекорд для разблокировки: <span id="shopBestScore">0</span></div>
         
@@ -234,8 +283,8 @@
 
     <!-- ТАБЛИЦА ЛИДЕРОВ -->
     <div id="leaderboardScreen" class="screen hidden">
-        <div class="logo-tag">РЕЙТИНГ ИГРОКОВ</div>
-        <h1>ТАБЛИЦА</h1>
+        <div class="logo-tag">ТАБЛИЦА ЛИДЕРОВ</div>
+        <h1>РЕЙТИНГ</h1>
         <div class="leaderboard-list">
             <div class="lb-row"><span>1. 👑 Твой рекорд</span><span id="lbBest">0 очков</span></div>
             <div class="lb-row"><span>2. 🥷 darkse11</span><span>3 420 очков</span></div>
@@ -249,13 +298,13 @@
     <div id="rulesScreen" class="screen hidden">
         <div class="logo-tag">ИНФОРМАЦИЯ</div>
         <h1>БОНУСЫ</h1>
-        <div class="subtitle" style="text-align: left; margin-bottom: 25px;">
+        <div class="subtitle" style="text-align: left; margin-bottom: 22px;">
             • <b>1 000 очков</b> = Скидка 1% (VA-1PRO)<br>
             • <b>2 000 очков</b> = Скидка 2% (VA-2PRO)<br>
             • <b>3 000+ очков</b> = Скидка 3% (макс. 3%, VA-3PRO)<br><br>
             ⭐ <i>Золотые дропы дают +50 очков!</i><br>
             ⏱️ <i>Часики замораживают время!</i><br>
-            🔥 <i>Black Friday Fever каждые 500 очков (х3 очков)!</i><br>
+            🔥 <i>Black Friday Fever каждые 500 очков (х3)!</i><br>
             ❌ <i>Убитая реплика завершает игру!</i>
         </div>
         <button class="menu-btn primary" onclick="showMenu()">« НАЗАД В МЕНЮ</button>
@@ -296,7 +345,7 @@
         let feverMode = false;
         let feverTimer = 0;
         let nextFeverScore = 500;
-        let freezeTimer = 0; // Заморозка времени
+        let freezeTimer = 0;
         let gridOffset = 0;
 
         let highscore = parseInt(localStorage.getItem('va_highscore') || '0');
@@ -330,13 +379,13 @@
                 
                 let btnHtml = '';
                 if (isSelected) {
-                    btnHtml = `<span style="color:#2ecc71; font-weight:bold; font-size:11px;">АКТИВНО</span>`;
+                    btnHtml = `<span style="color:#2ecc71; font-weight:700; font-size:10px;">АКТИВНО</span>`;
                 } else if (skin.unlocked) {
                     btnHtml = `<button class="shop-btn" onclick="selectSkin('${skin.id}')">ВЫБРАТЬ</button>`;
                 } else if (highscore >= skin.price) {
                     btnHtml = `<button class="shop-btn" style="background:#2ecc71; color:#fff;" onclick="buySkin('${skin.id}')">КУПИТЬ</button>`;
                 } else {
-                    btnHtml = `<span style="color:#777; font-size:11px;">🔒 От ${skin.price}</span>`;
+                    btnHtml = `<span style="color:#666; font-size:10px;">🔒 От ${skin.price}</span>`;
                 }
 
                 div.innerHTML = `<span>${skin.name}</span>${btnHtml}`;
@@ -391,7 +440,7 @@
                     if (step % 4 === 0) freq = bassNotes[(step / 4) % bassNotes.length];
 
                     osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-                    gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.03, audioCtx.currentTime);
                     gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2);
                     osc.start(); osc.stop(audioCtx.currentTime + 0.2);
                     step++;
@@ -411,27 +460,27 @@
                 if (type === 'slice') {
                     osc.frequency.setValueAtTime(350, audioCtx.currentTime);
                     osc.frequency.exponentialRampToValueAtTime(850, audioCtx.currentTime + 0.08);
-                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
                     gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.08);
                     osc.start(); osc.stop(audioCtx.currentTime + 0.08);
                 } else if (type === 'gold') {
                     osc.frequency.setValueAtTime(600, audioCtx.currentTime);
                     osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.2);
-                    gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
                     gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2);
                     osc.start(); osc.stop(audioCtx.currentTime + 0.2);
                 } else if (type === 'freeze') {
                     osc.type = 'sine';
                     osc.frequency.setValueAtTime(800, audioCtx.currentTime);
                     osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.3);
-                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
                     gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
                     osc.start(); osc.stop(audioCtx.currentTime + 0.3);
                 } else if (type === 'fake') {
                     osc.type = 'sawtooth';
                     osc.frequency.setValueAtTime(140, audioCtx.currentTime);
                     osc.frequency.linearRampToValueAtTime(40, audioCtx.currentTime + 0.3);
-                    gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
                     gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
                     osc.start(); osc.stop(audioCtx.currentTime + 0.3);
                 }
@@ -468,7 +517,6 @@
             window.location.href = "https://t.me/darkse11";
         }
 
-        // Подключаем файлы по порядку со скриншота GitHub
         const rawItems = [
             { file: "IMG_B6DA3E141F57-1.jpeg", isGold: false, isFreeze: false, isBomb: false },
             { file: "IMG_B6DA3E141F57-2.jpeg", isGold: false, isFreeze: false, isBomb: false },
@@ -478,8 +526,8 @@
             { file: "IMG_B6DA3E141F57-6.jpeg", isGold: false, isFreeze: false, isBomb: false },
             { file: "IMG_B6DA3E141F57-7.jpeg", isGold: false, isFreeze: false, isBomb: false },
             { file: "IMG_B6DA3E141F57-8.jpeg", isGold: false, isFreeze: false, isBomb: false },
-            { file: "IMG_B6DA3E141F57-9.jpeg", isGold: true,  isFreeze: false, isBomb: false }, // Золотой дроп
-            { file: "IMG_B6DA3E141F57-10.jpeg", isGold: false, isFreeze: true,  isBomb: false }  // 10-й файл переведен под часики заморозки
+            { file: "IMG_B6DA3E141F57-9.jpeg", isGold: true,  isFreeze: false, isBomb: false },
+            { file: "IMG_B6DA3E141F57-10.jpeg", isGold: false, isFreeze: true,  isBomb: false }
         ];
 
         const loadedItems = rawItems.map(item => {
@@ -507,7 +555,6 @@
                 } else if (rand < 0.15) {
                     this.data = loadedItems.find(i => i.isFreeze);
                 } else if (rand < 0.3) {
-                    // Паленка генерируется программно крестиком
                     this.data = { isBomb: true };
                 } else {
                     let normalItems = loadedItems.filter(i => !i.isGold && !i.isFreeze);
@@ -520,7 +567,7 @@
             }
 
             update() {
-                let m = freezeTimer > 0 ? 0.4 : 1; // Замедление при заморозке
+                let m = freezeTimer > 0 ? 0.4 : 1;
                 this.x += this.vx * m;
                 this.y += this.vy * m;
                 this.vy += this.gravity * m;
@@ -548,10 +595,10 @@
                 } else {
                     ctx.beginPath();
                     ctx.arc(0, 0, this.size / 2 + 4, 0, Math.PI * 2);
-                    ctx.fillStyle = "rgba(15, 15, 15, 0.85)";
+                    ctx.fillStyle = "rgba(18, 18, 18, 0.9)";
                     ctx.fill();
                     ctx.lineWidth = 2;
-                    ctx.strokeStyle = this.data.isGold ? "#ffd700" : (this.data.isFreeze ? "#3498db" : "rgba(255, 255, 255, 0.2)");
+                    ctx.strokeStyle = this.data.isGold ? "#ffd700" : (this.data.isFreeze ? "#3498db" : "rgba(255, 255, 255, 0.15)");
                     ctx.stroke();
 
                     ctx.save();
@@ -587,7 +634,7 @@
             draw() {
                 ctx.save();
                 ctx.globalAlpha = Math.max(0, this.alpha);
-                ctx.font = 'bold 18px -apple-system, sans-serif';
+                ctx.font = 'bold 16px Montserrat, sans-serif';
                 ctx.fillStyle = this.color;
                 ctx.textAlign = 'center';
                 ctx.fillText(this.text, this.x, this.y);
@@ -601,7 +648,7 @@
                 this.vx = (Math.random() - 0.5) * 14;
                 this.vy = (Math.random() - 0.5) * 14;
                 this.alpha = 1; this.color = color;
-                this.size = Math.random() * 6 + 3;
+                this.size = Math.random() * 5 + 2;
             }
             update() { this.x += this.vx; this.y += this.vy; this.alpha -= 0.025; }
             draw() {
@@ -627,10 +674,17 @@
             isPlaying = true;
             document.getElementById('score').innerText = score;
             document.getElementById('lives').innerText = lives;
+            updateProgressBar();
             
             document.getElementById('mainMenu').classList.add('hidden');
             document.getElementById('gameOverScreen').classList.add('hidden');
             document.getElementById('ui').style.display = 'flex';
+        }
+
+        function updateProgressBar() {
+            // Прогресс до 3000 очков (макс скидка)
+            let percent = Math.min(100, (score / 3000) * 100);
+            document.getElementById('progressBar').style.width = percent + '%';
         }
 
         function triggerPopup(elementId) {
@@ -693,13 +747,14 @@
                             let mult = feverMode ? 3 : 1;
                             score += 50 * mult;
                             document.getElementById('score').innerText = score;
+                            updateProgressBar();
                             floatTexts.push(new FloatingText(item.x, item.y, `+${50*mult} GOLD!`, "#ffd700"));
                             for (let i = 0; i < 20; i++) {
                                 particles.push(new Particle(item.x, item.y, "#ffd700"));
                             }
                         } else if (item.data.isFreeze) {
                             playSound('freeze');
-                            freezeTimer = 180; // 3 секунды заморозки
+                            freezeTimer = 180;
                             floatTexts.push(new FloatingText(item.x, item.y, "⏱️ FREEZE!", "#3498db"));
                             for (let i = 0; i < 15; i++) {
                                 particles.push(new Particle(item.x, item.y, "#3498db"));
@@ -708,7 +763,7 @@
                             playSound('slice');
                             combo++;
                             let points = feverMode ? 30 : 10;
-                            let txt = feverMode ? "+30 FEVER" : "+10 VA";
+                            let txt = feverMode ? "+30 FEVER" : "+10";
                             if (combo >= 3 && !feverMode) {
                                 points = 20;
                                 txt = "+20 COMBO";
@@ -716,9 +771,10 @@
                             }
                             score += points;
                             document.getElementById('score').innerText = score;
+                            updateProgressBar();
                             floatTexts.push(new FloatingText(item.x, item.y, txt, "#ffffff"));
                             
-                            for (let i = 0; i < 12; i++) {
+                            for (let i = 0; i < 10; i++) {
                                 particles.push(new Particle(item.x, item.y, "#ffffff"));
                             }
 
@@ -744,9 +800,9 @@
         function animate() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Отрисовка киберпанк-неоновой сетки на фоне
+            // Киберпанк-сетка на фоне
             gridOffset = (gridOffset + (freezeTimer > 0 ? 0.5 : 1.5)) % 40;
-            ctx.strokeStyle = feverMode ? "rgba(46, 204, 113, 0.08)" : "rgba(255, 255, 255, 0.03)";
+            ctx.strokeStyle = feverMode ? "rgba(46, 204, 113, 0.06)" : "rgba(255, 255, 255, 0.025)";
             ctx.lineWidth = 1;
             for (let x = 0; x < canvas.width; x += 40) {
                 ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
@@ -811,7 +867,7 @@
                     ctx.lineTo(trail[i].x, trail[i].y);
                 }
                 ctx.strokeStyle = getActiveSkinColor();
-                ctx.lineWidth = 5;
+                ctx.lineWidth = 4;
                 ctx.stroke();
             }
 
