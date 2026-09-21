@@ -8,7 +8,7 @@
         body {
             margin: 0;
             padding: 0;
-            background: #050505;
+            background: #030303;
             color: #fff;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             overflow: hidden;
@@ -16,7 +16,7 @@
         }
         #gameCanvas {
             display: block;
-            background: radial-gradient(circle, #1a1a1a 0%, #000000 100%);
+            background: radial-gradient(circle, #151515 0%, #000000 100%);
             cursor: crosshair;
         }
         #ui {
@@ -34,7 +34,7 @@
             display: none;
         }
         .score-box {
-            background: rgba(20, 20, 20, 0.8);
+            background: rgba(20, 20, 20, 0.85);
             padding: 8px 14px;
             border-radius: 10px;
             border: 1px solid rgba(255, 255, 255, 0.15);
@@ -71,7 +71,7 @@
         .screen {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(5, 5, 5, 0.97);
+            background: rgba(4, 4, 4, 0.98);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -89,14 +89,14 @@
             text-transform: uppercase;
         }
         h1 {
-            font-size: 32px;
+            font-size: 30px;
             margin: 0 0 8px 0;
             letter-spacing: 3px;
             color: #fff;
             font-weight: 900;
         }
         .subtitle {
-            color: #aaa;
+            color: #999;
             font-size: 13px;
             margin-bottom: 20px;
             line-height: 1.4;
@@ -131,21 +131,37 @@
         .menu-btn:active {
             transform: scale(0.96);
         }
-        .skin-selector {
+        .shop-grid {
             display: flex;
-            gap: 10px;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+            max-width: 280px;
             margin-bottom: 20px;
         }
-        .skin-dot {
-            width: 30px; height: 30px;
-            border-radius: 50%;
-            cursor: pointer;
-            border: 2px solid transparent;
-            transition: 0.2s;
+        .shop-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 13px;
         }
-        .skin-dot.active {
-            border-color: #fff;
-            transform: scale(1.15);
+        .shop-item.selected {
+            border-color: #2ecc71;
+            background: rgba(46, 204, 113, 0.08);
+        }
+        .shop-btn {
+            background: #fff;
+            color: #000;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 11px;
         }
         .hidden {
             display: none !important;
@@ -195,18 +211,25 @@
     <div id="mainMenu" class="screen">
         <div class="logo-tag">VELVET ARMOR STORE</div>
         <h1>SLICER</h1>
-        <div class="subtitle">Выбери стиль лезвия и разнеси шмот!</div>
+        <div class="subtitle">Выбери лезвие в магазине и в бой!</div>
         
-        <div class="skin-selector">
-            <div class="skin-dot active" style="background:#ffffff;" onclick="setSkin('#ffffff', this)" title="Классика"></div>
-            <div class="skin-dot" style="background:#2ecc71;" onclick="setSkin('#2ecc71', this)" title="Stone Island Неон"></div>
-            <div class="skin-dot" style="background:#f1c40f;" onclick="setSkin('#f1c40f', this)" title="Золотой"></div>
-            <div class="skin-dot" style="background:#e74c3c;" onclick="setSkin('#e74c3c', this)" title="Огненный"></div>
-        </div>
-
         <button class="menu-btn primary" onclick="startGame()">⚡️ ИГРАТЬ</button>
+        <button class="menu-btn" onclick="showShop()">🛒 МАГАЗИН ЛЕЗВИЙ</button>
         <button class="menu-btn" onclick="showLeaderboard()">🏆 ТАБЛИЦА ЛИДЕРОВ</button>
         <button class="menu-btn" onclick="showRules()">📜 ПРАВИЛА И СКИДКИ</button>
+    </div>
+
+    <!-- МАГАЗИН ЛЕЗВИЙ -->
+    <div id="shopScreen" class="screen hidden">
+        <div class="logo-tag">АРСЕНАЛ</div>
+        <h1>МАГАЗИН</h1>
+        <div class="subtitle">Твой рекорд для разблокировки: <span id="shopBestScore">0</span> очков</div>
+        
+        <div class="shop-grid" id="shopList">
+            <!-- Динамически заполняется скриптом -->
+        </div>
+
+        <button class="menu-btn primary" onclick="showMenu()">« НАЗАД В МЕНЮ</button>
     </div>
 
     <!-- ТАБЛИЦА ЛИДЕРОВ -->
@@ -265,7 +288,6 @@
         let lives = 3;
         let combo = 0;
         let isPlaying = false;
-        let currentSkin = 'rgba(255, 255, 255, 0.9)';
         let items = [];
         let particles = [];
         let floatTexts = [];
@@ -274,19 +296,70 @@
         let feverTimer = 0;
         let nextFeverScore = 500;
 
-        let highscore = localStorage.getItem('va_highscore') || 0;
+        let highscore = parseInt(localStorage.getItem('va_highscore') || '0');
         document.getElementById('lbBest').innerText = highscore + " очков";
+        document.getElementById('shopBestScore').innerText = highscore;
 
-        function setSkin(color, el) {
-            document.querySelectorAll('.skin-dot').forEach(d => d.classList.remove('active'));
-            el.classList.add('active');
-            if(color === '#ffffff') currentSkin = 'rgba(255, 255, 255, 0.9)';
-            if(color === '#2ecc71') currentSkin = 'rgba(46, 204, 113, 0.95)';
-            if(color === '#f1c40f') currentSkin = 'rgba(241, 196, 15, 0.95)';
-            if(color === '#e74c3c') currentSkin = 'rgba(231, 76, 60, 0.95)';
+        // Конфиг скинов лезвий в магазине
+        let skins = [
+            { id: 'classic', name: 'Классический белый', color: 'rgba(255, 255, 255, 0.9)', price: 0, unlocked: true },
+            { id: 'stone', name: 'Stone Island Neon', color: 'rgba(46, 204, 113, 0.95)', price: 300, unlocked: localStorage.getItem('skin_stone') === 'true' },
+            { id: 'gold', name: 'Золотой ресейл', color: 'rgba(241, 196, 15, 0.95)', price: 1000, unlocked: localStorage.getItem('skin_gold') === 'true' },
+            { id: 'fire', name: 'Огненный Archive', color: 'rgba(231, 76, 60, 0.95)', price: 2000, unlocked: localStorage.getItem('skin_fire') === 'true' }
+        ];
+        skins[0].unlocked = true;
+
+        let currentSkinId = localStorage.getItem('va_current_skin') || 'classic';
+
+        function getActiveSkinColor() {
+            let s = skins.find(x => x.id === currentSkinId);
+            return s ? s.color : 'rgba(255, 255, 255, 0.9)';
+        }
+
+        function renderShop() {
+            let list = document.getElementById('shopList');
+            list.innerHTML = '';
+            document.getElementById('shopBestScore').innerText = highscore;
+
+            skins.forEach(skin => {
+                let isSelected = skin.id === currentSkinId;
+                let div = document.createElement('div');
+                div.className = `shop-item ${isSelected ? 'selected' : ''}`;
+                
+                let btnHtml = '';
+                if (isSelected) {
+                    btnHtml = `<span style="color:#2ecc71; font-weight:bold; font-size:11px;">АКТИВНО</span>`;
+                } else if (skin.unlocked) {
+                    btnHtml = `<button class="shop-btn" onclick="selectSkin('${skin.id}')">ВЫБРАТЬ</button>`;
+                } else if (highscore >= skin.price) {
+                    btnHtml = `<button class="shop-btn" style="background:#2ecc71; color:#fff;" onclick="buySkin('${skin.id}')">КУПИТЬ</button>`;
+                } else {
+                    btnHtml = `<span style="color:#777; font-size:11px;">🔒 От ${skin.price} очков</span>`;
+                }
+
+                div.innerHTML = `<span>${skin.name}</span>${btnHtml}`;
+                list.appendChild(div);
+            });
+        }
+
+        function selectSkin(id) {
+            currentSkinId = id;
+            localStorage.setItem('va_current_skin', id);
+            renderShop();
+        }
+
+        function buySkin(id) {
+            let skin = skins.find(s => s.id === id);
+            if (skin && highscore >= skin.price) {
+                skin.unlocked = true;
+                localStorage.setItem(`skin_${id}`, 'true');
+                selectSkin(id);
+            }
         }
 
         let audioCtx = null;
+        let bgmInterval = null;
+
         function initAudio() {
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -294,6 +367,35 @@
             if (audioCtx.state === 'suspended') {
                 audioCtx.resume();
             }
+            startBGM();
+        }
+
+        // Фоновый аркадный чиптюн-синтезатор (бесконечный луп мелодии)
+        function startBGM() {
+            if (bgmInterval) return;
+            let notes = [220, 247.05, 261.63, 293.66, 329.63, 349.23, 392.00];
+            let bassNotes = [110, 130.81, 146.83, 98.00];
+            let step = 0;
+
+            bgmInterval = setInterval(() => {
+                if (!isPlaying || !audioCtx) return;
+                try {
+                    let osc = audioCtx.createOscillator();
+                    let gain = audioCtx.createGain();
+                    osc.type = 'triangle';
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+
+                    let freq = notes[step % notes.length];
+                    if (step % 4 === 0) freq = bassNotes[(step / 4) % bassNotes.length];
+
+                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+                    step++;
+                } catch(e) {}
+            }, 300);
         }
 
         function playSound(type) {
@@ -308,20 +410,20 @@
                 if (type === 'slice') {
                     osc.frequency.setValueAtTime(350, audioCtx.currentTime);
                     osc.frequency.exponentialRampToValueAtTime(850, audioCtx.currentTime + 0.08);
-                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
                     gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.08);
                     osc.start(); osc.stop(audioCtx.currentTime + 0.08);
                 } else if (type === 'gold') {
                     osc.frequency.setValueAtTime(600, audioCtx.currentTime);
                     osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.2);
-                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
                     gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2);
                     osc.start(); osc.stop(audioCtx.currentTime + 0.2);
                 } else if (type === 'fake') {
                     osc.type = 'sawtooth';
                     osc.frequency.setValueAtTime(140, audioCtx.currentTime);
                     osc.frequency.linearRampToValueAtTime(40, audioCtx.currentTime + 0.3);
-                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
                     gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
                     osc.start(); osc.stop(audioCtx.currentTime + 0.3);
                 }
@@ -331,10 +433,17 @@
         function showMenu() {
             isPlaying = false;
             document.getElementById('mainMenu').classList.remove('hidden');
+            document.getElementById('shopScreen').classList.add('hidden');
             document.getElementById('leaderboardScreen').classList.add('hidden');
             document.getElementById('rulesScreen').classList.add('hidden');
             document.getElementById('gameOverScreen').classList.add('hidden');
             document.getElementById('ui').style.display = 'none';
+        }
+
+        function showShop() {
+            renderShop();
+            document.getElementById('mainMenu').classList.add('hidden');
+            document.getElementById('shopScreen').classList.remove('hidden');
         }
 
         function showLeaderboard() {
@@ -368,14 +477,13 @@
             constructor() {
                 this.x = Math.random() * (canvas.width - 160) + 80;
                 this.y = canvas.height + 80;
-                let speedMult = 1 + (score / 1500); // Усложнение по мере роста очков
+                let speedMult = 1 + (score / 1500);
                 this.vx = (Math.random() - 0.5) * 6;
                 this.vy = -(Math.random() * 5 + 13.5) * Math.min(speedMult, 1.4);
                 this.gravity = 0.35;
                 
                 let rand = Math.random();
                 if (feverMode) {
-                    // В режиме Лихорадки только нормальный и золотой шмот
                     let cleanItems = itemTypes.filter(i => !i.isBomb);
                     this.data = cleanItems[Math.floor(Math.random() * cleanItems.length)];
                 } else if (rand < 0.1) {
@@ -411,7 +519,7 @@
                 if (this.data.kind === "sneaker") {
                     ctx.beginPath();
                     ctx.roundRect(-35, -15, 70, 30, [10, 15, 8, 8]);
-                    ctx.fillStyle = "rgba(15, 15, 15, 0.95)";
+                    ctx.fillStyle = "rgba(12, 12, 12, 0.95)";
                     ctx.fill();
                     ctx.stroke();
                     ctx.fillStyle = this.data.color;
@@ -419,7 +527,7 @@
                 } else if (this.data.kind === "hoodie" || this.data.kind === "zip") {
                     ctx.beginPath();
                     ctx.roundRect(-30, -25, 60, 50, [15, 15, 5, 5]);
-                    ctx.fillStyle = "rgba(15, 15, 15, 0.95)";
+                    ctx.fillStyle = "rgba(12, 12, 12, 0.95)";
                     ctx.fill();
                     ctx.stroke();
                     ctx.beginPath();
@@ -428,7 +536,7 @@
                 } else if (this.data.kind === "jacket") {
                     ctx.beginPath();
                     ctx.roundRect(-32, -28, 64, 52, [8, 8, 4, 4]);
-                    ctx.fillStyle = "rgba(15, 15, 15, 0.95)";
+                    ctx.fillStyle = "rgba(12, 12, 12, 0.95)";
                     ctx.fill();
                     ctx.stroke();
                     ctx.beginPath();
@@ -439,7 +547,7 @@
                     ctx.moveTo(-20, -25); ctx.lineTo(-35, -10); ctx.lineTo(-20, -5);
                     ctx.lineTo(-20, 25); ctx.lineTo(20, 25); ctx.lineTo(20, -5);
                     ctx.lineTo(35, -10); ctx.lineTo(20, -25); ctx.closePath();
-                    ctx.fillStyle = "rgba(15, 15, 15, 0.95)";
+                    ctx.fillStyle = "rgba(12, 12, 12, 0.95)";
                     ctx.fill();
                     ctx.stroke();
                 } else if (this.data.kind === "gold") {
@@ -648,10 +756,9 @@
                                 particles.push(new Particle(item.x, item.y, item.data.color));
                             }
 
-                            // Проверка активации лихорадки Black Friday
                             if (score >= nextFeverScore && !feverMode) {
                                 feverMode = true;
-                                feverTimer = 250; // Длительность лихорадки
+                                feverTimer = 250;
                                 triggerPopup('feverPopup');
                                 nextFeverScore += 500;
                             }
@@ -723,7 +830,7 @@
                 for (let i = 1; i < trail.length; i++) {
                     ctx.lineTo(trail[i].x, trail[i].y);
                 }
-                ctx.strokeStyle = currentSkin;
+                ctx.strokeStyle = getActiveSkinColor();
                 ctx.lineWidth = 5;
                 ctx.stroke();
             }
