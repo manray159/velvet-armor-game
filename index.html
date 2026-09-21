@@ -16,7 +16,7 @@
         }
         #gameCanvas {
             display: block;
-            background: radial-gradient(circle, #151515 0%, #000000 100%);
+            background: #050505;
             cursor: crosshair;
         }
         #ui {
@@ -138,6 +138,8 @@
             width: 100%;
             max-width: 280px;
             margin-bottom: 20px;
+            max-height: 250px;
+            overflow-y: auto;
         }
         .shop-item {
             display: flex;
@@ -211,7 +213,7 @@
     <div id="mainMenu" class="screen">
         <div class="logo-tag">VELVET ARMOR STORE</div>
         <h1>SLICER</h1>
-        <div class="subtitle">Режь чистый мерч, обходи паленку!</div>
+        <div class="subtitle">Киберпанк-аркада с твоим шмотом</div>
         
         <button class="menu-btn primary" onclick="startGame()">⚡️ ИГРАТЬ</button>
         <button class="menu-btn" onclick="showShop()">🛒 МАГАЗИН ЛЕЗВИЙ</button>
@@ -223,7 +225,7 @@
     <div id="shopScreen" class="screen hidden">
         <div class="logo-tag">АРСЕНАЛ</div>
         <h1>МАГАЗИН</h1>
-        <div class="subtitle">Твой рекорд для разблокировки: <span id="shopBestScore">0</span> очков</div>
+        <div class="subtitle">Рекорд для разблокировки: <span id="shopBestScore">0</span></div>
         
         <div class="shop-grid" id="shopList"></div>
 
@@ -252,7 +254,8 @@
             • <b>2 000 очков</b> = Скидка 2% (VA-2PRO)<br>
             • <b>3 000+ очков</b> = Скидка 3% (макс. 3%, VA-3PRO)<br><br>
             ⭐ <i>Золотые дропы дают +50 очков!</i><br>
-            🔥 <i>Black Friday Fever каждые 500 очков (х3 очков без паленки)!</i><br>
+            ⏱️ <i>Часики замораживают время!</i><br>
+            🔥 <i>Black Friday Fever каждые 500 очков (х3 очков)!</i><br>
             ❌ <i>Убитая реплика завершает игру!</i>
         </div>
         <button class="menu-btn primary" onclick="showMenu()">« НАЗАД В МЕНЮ</button>
@@ -293,6 +296,8 @@
         let feverMode = false;
         let feverTimer = 0;
         let nextFeverScore = 500;
+        let freezeTimer = 0; // Заморозка времени
+        let gridOffset = 0;
 
         let highscore = parseInt(localStorage.getItem('va_highscore') || '0');
         document.getElementById('lbBest').innerText = highscore + " очков";
@@ -331,7 +336,7 @@
                 } else if (highscore >= skin.price) {
                     btnHtml = `<button class="shop-btn" style="background:#2ecc71; color:#fff;" onclick="buySkin('${skin.id}')">КУПИТЬ</button>`;
                 } else {
-                    btnHtml = `<span style="color:#777; font-size:11px;">🔒 От ${skin.price} очков</span>`;
+                    btnHtml = `<span style="color:#777; font-size:11px;">🔒 От ${skin.price}</span>`;
                 }
 
                 div.innerHTML = `<span>${skin.name}</span>${btnHtml}`;
@@ -415,6 +420,13 @@
                     gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
                     gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2);
                     osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+                } else if (type === 'freeze') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.3);
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.3);
                 } else if (type === 'fake') {
                     osc.type = 'sawtooth';
                     osc.frequency.setValueAtTime(140, audioCtx.currentTime);
@@ -456,18 +468,18 @@
             window.location.href = "https://t.me/darkse11";
         }
 
-        // Подключаем твои файлы по порядку со скриншота GitHub
+        // Подключаем файлы по порядку со скриншота GitHub
         const rawItems = [
-            { file: "IMG_B6DA3E141F57-1.jpeg", isGold: false, isBomb: false },
-            { file: "IMG_B6DA3E141F57-2.jpeg", isGold: false, isBomb: false },
-            { file: "IMG_B6DA3E141F57-3.jpeg", isGold: false, isBomb: false },
-            { file: "IMG_B6DA3E141F57-4.jpeg", isGold: false, isBomb: false },
-            { file: "IMG_B6DA3E141F57-5.jpeg", isGold: false, isBomb: false },
-            { file: "IMG_B6DA3E141F57-6.jpeg", isGold: false, isBomb: false },
-            { file: "IMG_B6DA3E141F57-7.jpeg", isGold: false, isBomb: false },
-            { file: "IMG_B6DA3E141F57-8.jpeg", isGold: false, isBomb: false },
-            { file: "IMG_B6DA3E141F57-9.jpeg", isGold: true,  isBomb: false }, // Золотой дроп
-            { file: "IMG_B6DA3E141F57-10.jpeg", isGold: false, isBomb: true }  // Бомба-паленка
+            { file: "IMG_B6DA3E141F57-1.jpeg", isGold: false, isFreeze: false, isBomb: false },
+            { file: "IMG_B6DA3E141F57-2.jpeg", isGold: false, isFreeze: false, isBomb: false },
+            { file: "IMG_B6DA3E141F57-3.jpeg", isGold: false, isFreeze: false, isBomb: false },
+            { file: "IMG_B6DA3E141F57-4.jpeg", isGold: false, isFreeze: false, isBomb: false },
+            { file: "IMG_B6DA3E141F57-5.jpeg", isGold: false, isFreeze: false, isBomb: false },
+            { file: "IMG_B6DA3E141F57-6.jpeg", isGold: false, isFreeze: false, isBomb: false },
+            { file: "IMG_B6DA3E141F57-7.jpeg", isGold: false, isFreeze: false, isBomb: false },
+            { file: "IMG_B6DA3E141F57-8.jpeg", isGold: false, isFreeze: false, isBomb: false },
+            { file: "IMG_B6DA3E141F57-9.jpeg", isGold: true,  isFreeze: false, isBomb: false }, // Золотой дроп
+            { file: "IMG_B6DA3E141F57-10.jpeg", isGold: false, isFreeze: true,  isBomb: false }  // 10-й файл переведен под часики заморозки
         ];
 
         const loadedItems = rawItems.map(item => {
@@ -490,12 +502,15 @@
                 if (feverMode) {
                     let cleanItems = loadedItems.filter(i => !i.isBomb);
                     this.data = cleanItems[Math.floor(Math.random() * cleanItems.length)];
-                } else if (rand < 0.1) {
+                } else if (rand < 0.08) {
                     this.data = loadedItems.find(i => i.isGold);
+                } else if (rand < 0.15) {
+                    this.data = loadedItems.find(i => i.isFreeze);
                 } else if (rand < 0.3) {
-                    this.data = loadedItems.find(i => i.isBomb);
+                    // Паленка генерируется программно крестиком
+                    this.data = { isBomb: true };
                 } else {
-                    let normalItems = loadedItems.filter(i => !i.isGold && !i.isBomb);
+                    let normalItems = loadedItems.filter(i => !i.isGold && !i.isFreeze);
                     this.data = normalItems[Math.floor(Math.random() * normalItems.length)];
                 }
 
@@ -505,10 +520,11 @@
             }
 
             update() {
-                this.x += this.vx;
-                this.y += this.vy;
-                this.vy += this.gravity;
-                this.angle += this.vAngle;
+                let m = freezeTimer > 0 ? 0.4 : 1; // Замедление при заморозке
+                this.x += this.vx * m;
+                this.y += this.vy * m;
+                this.vy += this.gravity * m;
+                this.angle += this.vAngle * m;
             }
 
             draw() {
@@ -535,7 +551,7 @@
                     ctx.fillStyle = "rgba(15, 15, 15, 0.85)";
                     ctx.fill();
                     ctx.lineWidth = 2;
-                    ctx.strokeStyle = this.data.isGold ? "#ffd700" : "rgba(255, 255, 255, 0.2)";
+                    ctx.strokeStyle = this.data.isGold ? "#ffd700" : (this.data.isFreeze ? "#3498db" : "rgba(255, 255, 255, 0.2)");
                     ctx.stroke();
 
                     ctx.save();
@@ -547,6 +563,14 @@
                         ctx.drawImage(this.data.img, -this.size / 2, -this.size / 2, this.size, this.size);
                     } catch(e) {}
                     ctx.restore();
+
+                    if (this.data.isFreeze) {
+                        ctx.font = 'bold 18px sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillStyle = '#3498db';
+                        ctx.fillText("⏱️", 0, 0);
+                    }
                 }
 
                 ctx.restore();
@@ -598,6 +622,7 @@
             particles = [];
             floatTexts = [];
             feverMode = false;
+            freezeTimer = 0;
             nextFeverScore = 500;
             isPlaying = true;
             document.getElementById('score').innerText = score;
@@ -672,11 +697,18 @@
                             for (let i = 0; i < 20; i++) {
                                 particles.push(new Particle(item.x, item.y, "#ffd700"));
                             }
+                        } else if (item.data.isFreeze) {
+                            playSound('freeze');
+                            freezeTimer = 180; // 3 секунды заморозки
+                            floatTexts.push(new FloatingText(item.x, item.y, "⏱️ FREEZE!", "#3498db"));
+                            for (let i = 0; i < 15; i++) {
+                                particles.push(new Particle(item.x, item.y, "#3498db"));
+                            }
                         } else {
                             playSound('slice');
                             combo++;
                             let points = feverMode ? 30 : 10;
-                            let txt = feverMode ? "+30 FEVER" : "+10";
+                            let txt = feverMode ? "+30 FEVER" : "+10 VA";
                             if (combo >= 3 && !feverMode) {
                                 points = 20;
                                 txt = "+20 COMBO";
@@ -712,10 +744,24 @@
         function animate() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+            // Отрисовка киберпанк-неоновой сетки на фоне
+            gridOffset = (gridOffset + (freezeTimer > 0 ? 0.5 : 1.5)) % 40;
+            ctx.strokeStyle = feverMode ? "rgba(46, 204, 113, 0.08)" : "rgba(255, 255, 255, 0.03)";
+            ctx.lineWidth = 1;
+            for (let x = 0; x < canvas.width; x += 40) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+            }
+            for (let y = gridOffset; y < canvas.height; y += 40) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+            }
+
             if (isPlaying) {
                 if (feverMode) {
                     feverTimer--;
                     if (feverTimer <= 0) feverMode = false;
+                }
+                if (freezeTimer > 0) {
+                    freezeTimer--;
                 }
 
                 spawnTimer++;
@@ -732,7 +778,7 @@
 
                     if (!item.sliced && item.y > canvas.height + 100) {
                         items.splice(i, 1);
-                        if (!item.data.isBomb) {
+                        if (!item.data.isBomb && !item.data.isFreeze) {
                             combo = 0;
                             lives--;
                             document.getElementById('lives').innerText = lives;
