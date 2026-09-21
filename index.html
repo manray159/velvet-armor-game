@@ -3,108 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Velvet Armor — Block Blast</title>
+    <title>Velvet Armor — Slicer</title>
     <style>
-        body {
+        html, body {
             margin: 0;
             padding: 0;
+            width: 100%;
+            height: 100%;
             background: #050505;
             color: #fff;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
+            position: fixed;
             touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
-        #gameContainer {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: space-between;
+        #gameCanvas {
+            display: block;
+            background: radial-gradient(circle, #1a1a1a 0%, #000000 100%);
+            cursor: crosshair;
             width: 100%;
-            max-width: 400px;
             height: 100%;
-            max-height: 750px;
-            padding: 15px;
-            box-sizing: border-box;
         }
-        #header {
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
             display: flex;
             justify-content: space-between;
-            width: 100%;
+            pointer-events: none;
             font-size: 16px;
             font-weight: 800;
-            letter-spacing: 1px;
-            margin-bottom: 10px;
+            letter-spacing: 1.5px;
+            z-index: 5;
+            display: none;
         }
         .score-box {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(20, 20, 20, 0.8);
             padding: 8px 14px;
             border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        #grid {
-            display: grid;
-            grid-template-columns: repeat(8, 1fr);
-            grid-template-rows: repeat(8, 1fr);
-            gap: 4px;
-            background: rgba(20, 20, 20, 0.9);
-            padding: 8px;
-            border-radius: 12px;
             border: 1px solid rgba(255, 255, 255, 0.15);
-            width: 100%;
-            aspect-ratio: 1;
-            box-sizing: border-box;
+            backdrop-filter: blur(10px);
         }
-        .cell {
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 4px;
-            transition: background 0.1s;
+        #comboPopup {
+            position: absolute;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 20px;
+            font-weight: 900;
+            color: #f1c40f;
+            text-shadow: 0 0 10px rgba(241, 196, 15, 0.5);
+            z-index: 6;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
         }
-        .cell.filled {
-            background: #2ecc71;
-            box-shadow: inset 0 0 8px rgba(0,0,0,0.3);
-        }
-        .cell.highlight {
-            background: rgba(46, 204, 113, 0.4);
-        }
-        #dock {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            width: 100%;
-            height: 120px;
-            background: rgba(15, 15, 15, 0.8);
-            border-radius: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 10px;
-            box-sizing: border-box;
-        }
-        .piece-container {
-            width: 90px;
-            height: 90px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: grab;
-        }
-        .mini-grid {
-            display: grid;
-            gap: 2px;
-        }
-        .mini-cell {
-            width: 18px;
-            height: 18px;
-            background: #2ecc71;
-            border-radius: 3px;
+        #feverPopup {
+            position: absolute;
+            top: 110px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 22px;
+            font-weight: 900;
+            color: #2ecc71;
+            text-shadow: 0 0 15px rgba(46, 204, 113, 0.7);
+            z-index: 6;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
         }
         .screen {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(5, 5, 5, 0.98);
+            background: rgba(5, 5, 5, 0.97);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -161,9 +135,49 @@
             color: #fff;
             border: none;
         }
+        .menu-btn:active {
+            transform: scale(0.96);
+        }
+        .skin-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .skin-dot {
+            width: 30px; height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: 0.2s;
+        }
+        .skin-dot.active {
+            border-color: #fff;
+            transform: scale(1.15);
+        }
         .hidden {
             display: none !important;
         }
+        .leaderboard-list {
+            width: 100%;
+            max-width: 280px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+            text-align: left;
+        }
+        .lb-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            color: #ccc;
+        }
+        .lb-row:last-child { border-bottom: none; }
+        .lb-row span:last-child { font-weight: bold; color: #fff; }
         .promo-card {
             margin-top: 12px;
             padding: 10px 14px;
@@ -177,13 +191,49 @@
 </head>
 <body>
 
+    <!-- Жесткая блокировка скролла и оттяжки страницы на мобилках -->
+    <script>
+        document.addEventListener('touchmove', function(e) {
+            e.preventDefault();
+        }, { passive: false });
+    </script>
+
+    <div id="ui">
+        <div class="score-box">СЧЕТ: <span id="score">0</span></div>
+        <div class="score-box">ЖИЗНИ: <span id="lives">3</span> ❤️</div>
+    </div>
+    <div id="comboPopup">COMBO x2! 🔥</div>
+    <div id="feverPopup">⭐ BLACK FRIDAY FEVER! ⭐</div>
+
     <!-- ГЛАВНОЕ МЕНЮ -->
     <div id="mainMenu" class="screen">
-        <div class="logo-tag">VELVET ARMOR</div>
-        <h1>BLOCK BLAST</h1>
-        <div class="subtitle">Собери линии, набей очки и выбей скидку до 3%!</div>
+        <div class="logo-tag">VELVET ARMOR STORE</div>
+        <h1>SLICER</h1>
+        <div class="subtitle">Выбери стиль лезвия и разнеси шмот!</div>
+
+        <div class="skin-selector">
+            <div class="skin-dot active" style="background:#ffffff;" onclick="setSkin('#ffffff', this)" title="Классика"></div>
+            <div class="skin-dot" style="background:#2ecc71;" onclick="setSkin('#2ecc71', this)" title="Stone Island Неон"></div>
+            <div class="skin-dot" style="background:#f1c40f;" onclick="setSkin('#f1c40f', this)" title="Золотой"></div>
+            <div class="skin-dot" style="background:#e74c3c;" onclick="setSkin('#e74c3c', this)" title="Огненный"></div>
+        </div>
+
         <button class="menu-btn primary" onclick="startGame()">⚡️ ИГРАТЬ</button>
+        <button class="menu-btn" onclick="showLeaderboard()">🏆 ТАБЛИЦА ЛИДЕРОВ</button>
         <button class="menu-btn" onclick="showRules()">📜 ПРАВИЛА И СКИДКИ</button>
+    </div>
+
+    <!-- ТАБЛИЦА ЛИДЕРОВ -->
+    <div id="leaderboardScreen" class="screen hidden">
+        <div class="logo-tag">РЕЙТИНГ ИГРОКОВ</div>
+        <h1>ТАБЛИЦА</h1>
+        <div class="leaderboard-list">
+            <div class="lb-row"><span>1. 👑 Твой рекорд</span><span id="lbBest">0 очков</span></div>
+            <div class="lb-row"><span>2. 🥷 darkse11</span><span>3 420 очков</span></div>
+            <div class="lb-row"><span>3. ⚡️ shrede2r</span><span>2 890 очков</span></div>
+            <div class="lb-row"><span>4. 👟 buyer_99</span><span>1 500 очков</span></div>
+        </div>
+        <button class="menu-btn primary" onclick="showMenu()">« НАЗАД В МЕНЮ</button>
     </div>
 
     <!-- ЭКРАН ПРАВИЛ -->
@@ -193,15 +243,17 @@
         <div class="subtitle" style="text-align: left; margin-bottom: 25px;">
             • <b>1 000 очков</b> = Скидка 1% (VA-1PRO)<br>
             • <b>2 000 очков</b> = Скидка 2% (VA-2PRO)<br>
-            • <b>3 000+ очков</b> = Скидка 3% (VA-3PRO)<br><br>
-            🧩 <i>Перетаскивай фигуры на поле 8х8. Заполняй линии по вертикали или горизонтали, чтобы очищать их и получать очки!</i>
+            • <b>3 000+ очков</b> = Скидка 3% (макс. 3%, VA-3PRO)<br><br>
+            ⭐ <i>Золотые лимитки дают +50 очков!</i><br>
+            🔥 <i>Black Friday Fever каждые 500 очков (х3 очков без паленки)!</i><br>
+            ❌ <i>Убитая реплика завершает игру!</i>
         </div>
         <button class="menu-btn primary" onclick="showMenu()">« НАЗАД В МЕНЮ</button>
     </div>
 
     <!-- ЭКРАН КОНЦА ИГРЫ -->
     <div id="gameOverScreen" class="screen hidden">
-        <h1>ИГРА ОКОНЧЕНА</h1>
+        <h1 id="goTitle">ИГРА ОКОНЧЕНА</h1>
         <div class="subtitle" id="goSubtitle">Твой счет: 0</div>
         <div class="promo-card hidden" id="promoBlock"></div>
         <br>
@@ -210,38 +262,98 @@
         <button class="menu-btn" onclick="showMenu()">В ГЛАВНОЕ МЕНЮ</button>
     </div>
 
-    <!-- ИГРОВОЙ ИНТЕРФЕЙС -->
-    <div id="gameContainer">
-        <div id="header">
-            <div class="score-box">СЧЕТ: <span id="score">0</span></div>
-            <div class="score-box">РЕКОРД: <span id="bestScore">0</span></div>
-        </div>
-        <div id="grid"></div>
-        <div id="dock"></div>
-    </div>
+    <canvas id="gameCanvas"></canvas>
 
     <script>
-        const GRID_SIZE = 8;
-        let grid = Array(GRID_SIZE).fill(0).map(() => Array(GRID_SIZE).fill(0));
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
         let score = 0;
-        let highscore = localStorage.getItem('va_block_highscore') || 0;
-        document.getElementById('bestScore').innerText = highscore;
+        let lives = 3;
+        let combo = 0;
+        let isPlaying = false;
+        let currentSkin = 'rgba(255, 255, 255, 0.9)';
+        let items = [];
+        let particles = [];
+        let floatTexts = [];
+        let trail = [];
+        let feverMode = false;
+        let feverTimer = 0;
+        let nextFeverScore = 500;
 
-        const SHAPES = [
-            [[1]], // точка
-            [[1, 1]], // линия 2
-            [[1, 1, 1]], // линия 3
-            [[1, 1], [1, 1]], // квадрат 2x2
-            [[1, 0], [1, 1]], // уголок
-            [[1, 1, 1], [0, 1, 0]], // T-шка
-        ];
+        let highscore = localStorage.getItem('va_highscore') || 0;
+        document.getElementById('lbBest').innerText = highscore + " очков";
 
-        let currentPieces = [null, null, null];
+        function setSkin(color, el) {
+            document.querySelectorAll('.skin-dot').forEach(d => d.classList.remove('active'));
+            el.classList.add('active');
+            if(color === '#ffffff') currentSkin = 'rgba(255, 255, 255, 0.9)';
+            if(color === '#2ecc71') currentSkin = 'rgba(46, 204, 113, 0.95)';
+            if(color === '#f1c40f') currentSkin = 'rgba(241, 196, 15, 0.95)';
+            if(color === '#e74c3c') currentSkin = 'rgba(231, 76, 60, 0.95)';
+        }
+
+        let audioCtx = null;
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playSound(type) {
+            try {
+                initAudio();
+                if (!audioCtx) return;
+                let osc = audioCtx.createOscillator();
+                let gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'slice') {
+                    osc.frequency.setValueAtTime(350, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(850, audioCtx.currentTime + 0.08);
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.08);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.08);
+                } else if (type === 'gold') {
+                    osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.2);
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+                } else if (type === 'fake') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(140, audioCtx.currentTime);
+                    osc.frequency.linearRampToValueAtTime(40, audioCtx.currentTime + 0.3);
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+                }
+            } catch(e) {}
+        }
 
         function showMenu() {
+            isPlaying = false;
             document.getElementById('mainMenu').classList.remove('hidden');
+            document.getElementById('leaderboardScreen').classList.add('hidden');
             document.getElementById('rulesScreen').classList.add('hidden');
             document.getElementById('gameOverScreen').classList.add('hidden');
+            document.getElementById('ui').style.display = 'none';
+        }
+
+        function showLeaderboard() {
+            document.getElementById('mainMenu').classList.add('hidden');
+            document.getElementById('leaderboardScreen').classList.remove('hidden');
         }
 
         function showRules() {
@@ -253,218 +365,237 @@
             window.location.href = "https://t.me/darkse11";
         }
 
+        const itemTypes = [
+            { name: "Stone Island Tee", color: "#3498db", kind: "tee" },
+            { name: "Valentino Kicks", color: "#9b59b6", kind: "sneaker" },
+            { name: "Gucci Jacket", color: "#1abc9c", kind: "jacket" },
+            { name: "Raf Simons", color: "#f1c40f", kind: "sneaker" },
+            { name: "Rick Owens", color: "#ffffff", kind: "sneaker" },
+            { name: "Off-White Hoodie", color: "#e74c3c", kind: "hoodie" },
+            { name: "Olimpika Zip", color: "#2ecc71", kind: "zip" },
+            { name: "Maison Margiela", color: "#e84393", kind: "sneaker" },
+            { name: "⭐ GOLDEN DROP", color: "#ffd700", kind: "gold", isGold: true },
+            { name: "❌ Убитая реплика", color: "#ff0000", kind: "fake", isBomb: true }
+        ];
+
+        class Item {
+            constructor() {
+                this.x = Math.random() * (canvas.width - 160) + 80;
+                this.y = canvas.height + 80;
+                let speedMult = 1 + (score / 1500);
+                this.vx = (Math.random() - 0.5) * 6;
+                this.vy = -(Math.random() * 5 + 13.5) * Math.min(speedMult, 1.4);
+                this.gravity = 0.35;
+
+                let rand = Math.random();
+                if (feverMode) {
+                    let cleanItems = itemTypes.filter(i => !i.isBomb);
+                    this.data = cleanItems[Math.floor(Math.random() * cleanItems.length)];
+                } else if (rand < 0.1) {
+                    this.data = itemTypes.find(i => i.isGold);
+                } else if (rand < 0.3) {
+                    this.data = itemTypes.find(i => i.isBomb);
+                } else {
+                    let normalItems = itemTypes.filter(i => !i.isGold && !i.isBomb);
+                    this.data = normalItems[Math.floor(Math.random() * normalItems.length)];
+                }
+
+                this.sliced = false;
+                this.angle = 0;
+                this.vAngle = (Math.random() - 0.5) * 0.08;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += this.gravity;
+                this.angle += this.vAngle;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+
+                ctx.strokeStyle = this.data.color;
+                ctx.fillStyle = this.data.color;
+                ctx.lineWidth = this.data.isGold ? 4 : 3;
+
+                if (this.data.kind === "sneaker") {
+                    ctx.beginPath();
+                    ctx.roundRect(-35, -15, 70, 30, [10, 15, 8, 8]);
+                    ctx.fillStyle = "rgba(15, 15, 15, 0.95)";
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.fillStyle = this.data.color;
+                    ctx.fillRect(-37, 12, 74, 7);
+                } else if (this.data.kind === "hoodie" || this.data.kind === "zip") {
+                    ctx.beginPath();
+                    ctx.roundRect(-30, -25, 60, 50, [15, 15, 5, 5]);
+                    ctx.fillStyle = "rgba(15, 15, 15, 0.95)";
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.arc(0, -22, 14, Math.PI, 0, false);
+                    ctx.stroke();
+                } else if (this.data.kind === "jacket") {
+                    ctx.beginPath();
+                    ctx.roundRect(-32, -28, 64, 52, [8, 8, 4, 4]);
+                    ctx.fillStyle = "rgba(15, 15, 15, 0.95)";
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(0, -28); ctx.lineTo(0, 24);
+                    ctx.stroke();
+                } else if (this.data.kind === "tee") {
+                    ctx.beginPath();
+                    ctx.moveTo(-20, -25); ctx.lineTo(-35, -10); ctx.lineTo(-20, -5);
+                    ctx.lineTo(-20, 25); ctx.lineTo(20, 25); ctx.lineTo(20, -5);
+                    ctx.lineTo(35, -10); ctx.lineTo(20, -25); ctx.closePath();
+                    ctx.fillStyle = "rgba(15, 15, 15, 0.95)";
+                    ctx.fill();
+                    ctx.stroke();
+                } else if (this.data.kind === "gold") {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 36, 0, Math.PI * 2);
+                    ctx.fillStyle = "rgba(255, 215, 0, 0.3)";
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.font = 'bold 22px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText("⭐", 0, 0);
+                } else if (this.data.kind === "fake") {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 34, 0, Math.PI * 2);
+                    ctx.fillStyle = "rgba(255, 0, 0, 0.25)";
+                    ctx.fill();
+                    ctx.lineWidth = 4;
+                    ctx.stroke();
+                    ctx.font = 'bold 26px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillStyle = '#ff0000';
+                    ctx.fillText("❌", 0, 0);
+                }
+
+                if (this.data.kind !== "fake" && this.data.kind !== "gold") {
+                    ctx.font = 'bold 11px -apple-system, sans-serif';
+                    ctx.fillStyle = '#ffffff';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'top';
+                    ctx.fillText(this.data.name, 0, 35);
+                } else if (this.data.kind === "gold") {
+                    ctx.font = 'bold 12px -apple-system, sans-serif';
+                    ctx.fillStyle = '#ffd700';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'top';
+                    ctx.fillText("GOLDEN DROP", 0, 40);
+                }
+
+                ctx.restore();
+            }
+        }
+
+        class FloatingText {
+            constructor(x, y, text, color) {
+                this.x = x; this.y = y;
+                this.text = text; this.color = color;
+                this.alpha = 1; this.vy = -2;
+            }
+            update() { this.y += this.vy; this.alpha -= 0.035; }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.alpha);
+                ctx.font = 'bold 18px -apple-system, sans-serif';
+                ctx.fillStyle = this.color;
+                ctx.textAlign = 'center';
+                ctx.fillText(this.text, this.x, this.y);
+                ctx.restore();
+            }
+        }
+
+        class HalfPiece {
+            constructor(x, y, color, isLeft) {
+                this.x = x; this.y = y;
+                this.vx = isLeft ? - (Math.random() * 4 + 2) : (Math.random() * 4 + 2);
+                this.vy = -(Math.random() * 3 + 2);
+                this.gravity = 0.4;
+                this.alpha = 1; this.color = color;
+                this.angle = 0; this.vAngle = isLeft ? -0.1 : 0.1;
+            }
+            update() {
+                this.x += this.vx; this.y += this.vy;
+                this.vy += this.gravity; this.angle += this.vAngle;
+                this.alpha -= 0.03;
+            }
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                ctx.globalAlpha = Math.max(0, this.alpha);
+                ctx.fillStyle = this.color;
+                ctx.fillRect(-15, -8, 30, 16);
+                ctx.restore();
+            }
+        }
+
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x; this.y = y;
+                this.vx = (Math.random() - 0.5) * 14;
+                this.vy = (Math.random() - 0.5) * 14;
+                this.alpha = 1; this.color = color;
+                this.size = Math.random() * 6 + 3;
+            }
+            update() { this.x += this.vx; this.y += this.vy; this.alpha -= 0.025; }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.alpha);
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y, this.size, this.size);
+                ctx.restore();
+            }
+        }
+
         function startGame() {
-            grid = Array(GRID_SIZE).fill(0).map(() => Array(GRID_SIZE).fill(0));
+            initAudio();
             score = 0;
+            lives = 3;
+            combo = 0;
+            items = [];
+            particles = [];
+            floatTexts = [];
+            feverMode = false;
+            nextFeverScore = 500;
+            isPlaying = true;
             document.getElementById('score').innerText = score;
+            document.getElementById('lives').innerText = lives;
+
             document.getElementById('mainMenu').classList.add('hidden');
             document.getElementById('gameOverScreen').classList.add('hidden');
-            renderGrid();
-            spawnPieces();
+            document.getElementById('ui').style.display = 'flex';
         }
 
-        function renderGrid() {
-            const gridEl = document.getElementById('grid');
-            gridEl.innerHTML = '';
-            for (let r = 0; r < GRID_SIZE; r++) {
-                for (let c = 0; c < GRID_SIZE; c++) {
-                    const cell = document.createElement('div');
-                    cell.className = 'cell';
-                    if (grid[r][c] === 1) {
-                        cell.classList.add('filled');
-                    }
-                    gridEl.appendChild(cell);
-                }
-            }
-        }
-
-        function spawnPieces() {
-            const dock = document.getElementById('dock');
-            dock.innerHTML = '';
-            currentPieces = [];
-
-            for (let i = 0; i < 3; i++) {
-                const shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
-                currentPieces.push(shape);
-
-                const container = document.createElement('div');
-                container.className = 'piece-container';
-                container.dataset.index = i;
-
-                const miniGrid = document.createElement('div');
-                miniGrid.className = 'mini-grid';
-                const rows = shape.length;
-                const cols = shape[0].length;
-                miniGrid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-
-                for (let r = 0; r < rows; r++) {
-                    for (let c = 0; c < cols; c++) {
-                        const mCell = document.createElement('div');
-                        if (shape[r][c] === 1) {
-                            mCell.className = 'mini-cell';
-                        } else {
-                            mCell.style.background = 'transparent';
-                        }
-                        miniGrid.appendChild(mCell);
-                    }
-                }
-
-                container.appendChild(miniGrid);
-                initDragAndDrop(container, i);
-                dock.appendChild(container);
-            }
-
-            checkGameOver();
-        }
-
-        function initDragAndDrop(element, pieceIndex) {
-            let startX, startY;
-
-            element.addEventListener('pointerdown', (e) => {
-                if (!currentPieces[pieceIndex]) return;
-                startX = e.clientX;
-                startY = e.clientY;
-                element.style.opacity = '0.5';
-
-                function onPointerMove(e) {
-                    // Простое отслеживание перемещения для мобильных и ПК
-                }
-
-                function onPointerUp(e) {
-                    element.style.opacity = '1';
-                    window.removeEventListener('pointermove', onPointerMove);
-                    window.removeEventListener('pointerup', onPointerUp);
-
-                    // Проверяем, куда бросили (упрощенная логика по клику/тапу в центр поля или падению)
-                    tryPlacePiece(pieceIndex);
-                }
-
-                window.addEventListener('pointermove', onPointerMove);
-                window.addEventListener('pointerup', onPointerUp);
-            });
-        }
-
-        // Упрощенная надежная интерактивная логика для мини-апп: клик по фигуре, затем клик по полю
-        let selectedPieceIndex = null;
-
-        function initDragAndDrop(element, pieceIndex) {
-            element.addEventListener('click', () => {
-                document.querySelectorAll('.piece-container').forEach(el => el.style.border = 'none');
-                selectedPieceIndex = pieceIndex;
-                element.style.border = '2px solid #2ecc71';
-                element.style.borderRadius = '8px';
-            });
-        }
-
-        document.getElementById('grid').addEventListener('click', (e) => {
-            if (selectedPieceIndex === null || !currentPieces[selectedPieceIndex]) return;
-
-            const gridRect = document.getElementById('grid').getBoundingClientRect();
-            const cellSize = gridRect.width / GRID_SIZE;
-            const x = Math.floor((e.clientX - gridRect.left) / cellSize);
-            const y = Math.floor((e.clientY - gridRect.top) / cellSize);
-
-            if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
-                if (canPlace(currentPieces[selectedPieceIndex], y, x)) {
-                    placePiece(currentPieces[selectedPieceIndex], y, x);
-                    currentPieces[selectedPieceIndex] = null;
-                    document.querySelectorAll('.piece-container')[selectedPieceIndex].innerHTML = '';
-                    selectedPieceIndex = null;
-
-                    checkLines();
-                    renderGrid();
-
-                    if (currentPieces.every(p => p === null)) {
-                        spawnPieces();
-                    } else {
-                        checkGameOver();
-                    }
-                }
-            }
-        });
-
-        function canPlace(shape, startR, startC) {
-            const rows = shape.length;
-            const cols = shape[0].length;
-            if (startR + rows > GRID_SIZE || startC + cols > GRID_SIZE) return false;
-
-            for (let r = 0; r < rows; r++) {
-                for (let c = 0; c < cols; c++) {
-                    if (shape[r][c] === 1 && grid[startR + r][startC + c] === 1) {
-                        return false;
-                    }
-                }
-            }
-            return true;
-        }
-
-        function placePiece(shape, startR, startC) {
-            const rows = shape.length;
-            const cols = shape[0].length;
-            for (let r = 0; r < rows; r++) {
-                for (let c = 0; c < cols; c++) {
-                    if (shape[r][c] === 1) {
-                        grid[startR + r][startC + c] = 1;
-                        score += 10;
-                    }
-                }
-            }
-            document.getElementById('score').innerText = score;
-        }
-
-        function checkLines() {
-            let fullRows = [];
-            let fullCols = [];
-
-            for (let r = 0; r < GRID_SIZE; r++) {
-                if (grid[r].every(cell => cell === 1)) fullRows.push(r);
-            }
-            for (let c = 0; c < GRID_SIZE; c++) {
-                let colFull = true;
-                for (let r = 0; r < GRID_SIZE; r++) {
-                    if (grid[r][c] === 0) colFull = false;
-                }
-                if (colFull) fullCols.push(c);
-            }
-
-            fullRows.forEach(r => {
-                for (let c = 0; c < GRID_SIZE; c++) grid[r][c] = 0;
-                score += 100;
-            });
-            fullCols.forEach(c => {
-                for (let r = 0; r < GRID_SIZE; r++) grid[r][c] = 0;
-                score += 100;
-            });
-
-            if (fullRows.length > 0 || fullCols.length > 0) {
-                document.getElementById('score').innerText = score;
-            }
-        }
-
-        function checkGameOver() {
-            let possibleMoves = false;
-            currentPieces.forEach(piece => {
-                if (!piece) return;
-                for (let r = 0; r < GRID_SIZE; r++) {
-                    for (let c = 0; c < GRID_SIZE; c++) {
-                        if (canPlace(piece, r, c)) possibleMoves = true;
-                    }
-                }
-            });
-
-            if (!possibleMoves && currentPieces.some(p => p !== null)) {
-                gameOver();
-            }
+        function triggerPopup(elementId) {
+            let el = document.getElementById(elementId);
+            el.style.opacity = '1';
+            setTimeout(() => { el.style.opacity = '0'; }, 700);
         }
 
         function gameOver() {
+            isPlaying = false;
+            document.getElementById('ui').style.display = 'none';
+            playSound('fake');
+
             if (score > highscore) {
                 highscore = score;
-                localStorage.setItem('va_block_highscore', highscore);
-                document.getElementById('bestScore').innerText = highscore;
+                localStorage.setItem('va_highscore', highscore);
+                document.getElementById('lbBest').innerText = highscore + " очков";
             }
 
             document.getElementById('gameOverScreen').classList.remove('hidden');
+
             let promoText = `Твой итоговый счет: ${score}. `;
             let promoBlock = document.getElementById('promoBlock');
 
@@ -488,8 +619,133 @@
             document.getElementById('goSubtitle').innerText = promoText;
         }
 
-        // Автозапуск генерации первой партии
-        spawnPieces();
+        function addTouch(x, y) {
+            trail.push({ x, y, time: Date.now() });
+            if (!isPlaying) return;
+
+            items.forEach(item => {
+                if (!item.sliced) {
+                    let dist = Math.hypot(item.x - x, item.y - y);
+                    if (dist < 60) {
+                        item.sliced = true;
+                        if (item.data.isBomb) {
+                            lives = 0;
+                            document.getElementById('lives').innerText = lives;
+                            gameOver();
+                        } else if (item.data.isGold) {
+                            playSound('gold');
+                            let mult = feverMode ? 3 : 1;
+                            score += 50 * mult;
+                            document.getElementById('score').innerText = score;
+                            floatTexts.push(new FloatingText(item.x, item.y, `+${50*mult} GOLD!`, "#ffd700"));
+                            for (let i = 0; i < 20; i++) {
+                                particles.push(new Particle(item.x, item.y, "#ffd700"));
+                            }
+                        } else {
+                            playSound('slice');
+                            combo++;
+                            let points = feverMode ? 30 : 10;
+                            let txt = feverMode ? "+30 FEVER" : "+10";
+                            if (combo >= 3 && !feverMode) {
+                                points = 20;
+                                txt = "+20 COMBO";
+                                triggerPopup('comboPopup');
+                            }
+                            score += points;
+                            document.getElementById('score').innerText = score;
+                            floatTexts.push(new FloatingText(item.x, item.y, txt, item.data.color));
+
+                            particles.push(new HalfPiece(item.x, item.y, item.data.color, true));
+                            particles.push(new HalfPiece(item.x, item.y, item.data.color, false));
+                            for (let i = 0; i < 12; i++) {
+                                particles.push(new Particle(item.x, item.y, item.data.color));
+                            }
+
+                            if (score >= nextFeverScore && !feverMode) {
+                                feverMode = true;
+                                feverTimer = 250;
+                                triggerPopup('feverPopup');
+                                nextFeverScore += 500;
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        window.addEventListener('mousemove', e => addTouch(e.clientX, e.clientY));
+        window.addEventListener('touchmove', e => {
+            if (e.touches && e.touches[0]) {
+                let touch = e.touches[0];
+                addTouch(touch.clientX, touch.clientY);
+            }
+        }, { passive: false });
+
+        let spawnTimer = 0;
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (isPlaying) {
+                if (feverMode) {
+                    feverTimer--;
+                    if (feverTimer <= 0) feverMode = false;
+                }
+
+                spawnTimer++;
+                let spawnInterval = feverMode ? 22 : 36;
+                if (spawnTimer > spawnInterval) {
+                    items.push(new Item());
+                    spawnTimer = 0;
+                }
+
+                for (let i = items.length - 1; i >= 0; i--) {
+                    let item = items[i];
+                    item.update();
+                    item.draw();
+
+                    if (!item.sliced && item.y > canvas.height + 100) {
+                        items.splice(i, 1);
+                        if (!item.data.isBomb) {
+                            combo = 0;
+                            lives--;
+                            document.getElementById('lives').innerText = lives;
+                            if (lives <= 0) gameOver();
+                        }
+                    } else if (item.sliced) {
+                        items.splice(i, 1);
+                    }
+                }
+            }
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update();
+                particles[i].draw();
+                if (particles[i].alpha <= 0) particles.splice(i, 1);
+            }
+
+            for (let i = floatTexts.length - 1; i >= 0; i--) {
+                floatTexts[i].update();
+                floatTexts[i].draw();
+                if (floatTexts[i].alpha <= 0) floatTexts.splice(i, 1);
+            }
+
+            let now = Date.now();
+            trail = trail.filter(p => now - p.time < 150);
+            if (trail.length > 1) {
+                ctx.beginPath();
+                ctx.moveTo(trail[0].x, trail[0].y);
+                for (let i = 1; i < trail.length; i++) {
+                    ctx.lineTo(trail[i].x, trail[i].y);
+                }
+                ctx.strokeStyle = currentSkin;
+                ctx.lineWidth = 5;
+                ctx.stroke();
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
     </script>
 </body>
 </html>
