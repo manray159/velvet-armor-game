@@ -5,26 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Velvet Armor — Slicer</title>
     <style>
-        html, body {
+        body {
             margin: 0;
             padding: 0;
-            width: 100%;
-            height: 100%;
-            background: #050505;
+            background: #030303;
             color: #fff;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             overflow: hidden;
-            position: fixed;
             touch-action: none;
-            -webkit-user-select: none;
-            user-select: none;
         }
         #gameCanvas {
             display: block;
-            background: radial-gradient(circle, #1a1a1a 0%, #000000 100%);
+            background: #050505;
             cursor: crosshair;
-            width: 100%;
-            height: 100%;
         }
         #ui {
             position: absolute;
@@ -41,7 +34,7 @@
             display: none;
         }
         .score-box {
-            background: rgba(20, 20, 20, 0.8);
+            background: rgba(20, 20, 20, 0.85);
             padding: 8px 14px;
             border-radius: 10px;
             border: 1px solid rgba(255, 255, 255, 0.15);
@@ -78,7 +71,7 @@
         .screen {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(5, 5, 5, 0.97);
+            background: rgba(4, 4, 4, 0.98);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -96,14 +89,14 @@
             text-transform: uppercase;
         }
         h1 {
-            font-size: 32px;
+            font-size: 30px;
             margin: 0 0 8px 0;
             letter-spacing: 3px;
             color: #fff;
             font-weight: 900;
         }
         .subtitle {
-            color: #aaa;
+            color: #999;
             font-size: 13px;
             margin-bottom: 20px;
             line-height: 1.4;
@@ -138,21 +131,39 @@
         .menu-btn:active {
             transform: scale(0.96);
         }
-        .skin-selector {
+        .shop-grid {
             display: flex;
-            gap: 10px;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+            max-width: 280px;
             margin-bottom: 20px;
+            max-height: 250px;
+            overflow-y: auto;
         }
-        .skin-dot {
-            width: 30px; height: 30px;
-            border-radius: 50%;
+        .shop-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+        }
+        .shop-item.selected {
+            border-color: #2ecc71;
+            background: rgba(46, 204, 113, 0.08);
+        }
+        .shop-btn {
+            background: #fff;
+            color: #000;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: bold;
             cursor: pointer;
-            border: 2px solid transparent;
-            transition: 0.2s;
-        }
-        .skin-dot.active {
-            border-color: #fff;
-            transform: scale(1.15);
+            font-size: 11px;
         }
         .hidden {
             display: none !important;
@@ -191,12 +202,6 @@
 </head>
 <body>
 
-    <script>
-        document.addEventListener('touchmove', function(e) {
-            e.preventDefault();
-        }, { passive: false });
-    </script>
-
     <div id="ui">
         <div class="score-box">СЧЕТ: <span id="score">0</span></div>
         <div class="score-box">ЖИЗНИ: <span id="lives">3</span> ❤️</div>
@@ -208,18 +213,23 @@
     <div id="mainMenu" class="screen">
         <div class="logo-tag">VELVET ARMOR STORE</div>
         <h1>SLICER</h1>
-        <div class="subtitle">Выбери стиль лезвия и разнеси шмот!</div>
-
-        <div class="skin-selector">
-            <div class="skin-dot active" style="background:#ffffff;" onclick="setSkin('#ffffff', this)" title="Классика"></div>
-            <div class="skin-dot" style="background:#2ecc71;" onclick="setSkin('#2ecc71', this)" title="Stone Island Неон"></div>
-            <div class="skin-dot" style="background:#f1c40f;" onclick="setSkin('#f1c40f', this)" title="Золотой"></div>
-            <div class="skin-dot" style="background:#e74c3c;" onclick="setSkin('#e74c3c', this)" title="Огненный"></div>
-        </div>
-
+        <div class="subtitle">Киберпанк-аркада с твоим шмотом</div>
+        
         <button class="menu-btn primary" onclick="startGame()">⚡️ ИГРАТЬ</button>
+        <button class="menu-btn" onclick="showShop()">🛒 МАГАЗИН ЛЕЗВИЙ</button>
         <button class="menu-btn" onclick="showLeaderboard()">🏆 ТАБЛИЦА ЛИДЕРОВ</button>
         <button class="menu-btn" onclick="showRules()">📜 ПРАВИЛА И СКИДКИ</button>
+    </div>
+
+    <!-- МАГАЗИН ЛЕЗВИЙ -->
+    <div id="shopScreen" class="screen hidden">
+        <div class="logo-tag">АРСЕНАЛ</div>
+        <h1>МАГАЗИН</h1>
+        <div class="subtitle">Рекорд для разблокировки: <span id="shopBestScore">0</span></div>
+        
+        <div class="shop-grid" id="shopList"></div>
+
+        <button class="menu-btn primary" onclick="showMenu()">« НАЗАД В МЕНЮ</button>
     </div>
 
     <!-- ТАБЛИЦА ЛИДЕРОВ -->
@@ -243,8 +253,9 @@
             • <b>1 000 очков</b> = Скидка 1% (VA-1PRO)<br>
             • <b>2 000 очков</b> = Скидка 2% (VA-2PRO)<br>
             • <b>3 000+ очков</b> = Скидка 3% (макс. 3%, VA-3PRO)<br><br>
-            ⭐ <i>Золотые лимитки дают +50 очков!</i><br>
-            🔥 <i>Black Friday Fever каждые 500 очков (х3 очков без паленки)!</i><br>
+            ⭐ <i>Золотые дропы дают +50 очков!</i><br>
+            ⏱️ <i>Часики замораживают время!</i><br>
+            🔥 <i>Black Friday Fever каждые 500 очков (х3 очков)!</i><br>
             ❌ <i>Убитая реплика завершает игру!</i>
         </div>
         <button class="menu-btn primary" onclick="showMenu()">« НАЗАД В МЕНЮ</button>
@@ -278,7 +289,6 @@
         let lives = 3;
         let combo = 0;
         let isPlaying = false;
-        let currentSkin = 'rgba(255, 255, 255, 0.9)';
         let items = [];
         let particles = [];
         let floatTexts = [];
@@ -286,41 +296,72 @@
         let feverMode = false;
         let feverTimer = 0;
         let nextFeverScore = 500;
+        let freezeTimer = 0; // Заморозка времени
+        let gridOffset = 0;
 
-        let highscore = localStorage.getItem('va_highscore') || 0;
+        let highscore = parseInt(localStorage.getItem('va_highscore') || '0');
         document.getElementById('lbBest').innerText = highscore + " очков";
+        document.getElementById('shopBestScore').innerText = highscore;
 
-        // Загружаем твои картинки из репозитория
-        const imageFiles = [
-            "IMG_B6DA3E141F57-1.jpeg",
-            "IMG_B6DA3E141F57-2.jpeg",
-            "IMG_B6DA3E141F57-3.jpeg",
-            "IMG_B6DA3E141F57-4.jpeg",
-            "IMG_B6DA3E141F57-5.jpeg",
-            "IMG_B6DA3E141F57-6.jpeg",
-            "IMG_B6DA3E141F57-7.jpeg",
-            "IMG_B6DA3E141F57-8.jpeg",
-            "IMG_B6DA3E141F57-9.jpeg",
-            "IMG_B6DA3E141F57-10.jpeg"
+        let skins = [
+            { id: 'classic', name: 'Классический белый', color: 'rgba(255, 255, 255, 0.9)', price: 0, unlocked: true },
+            { id: 'stone', name: 'Stone Island Neon', color: 'rgba(46, 204, 113, 0.95)', price: 300, unlocked: localStorage.getItem('skin_stone') === 'true' },
+            { id: 'gold', name: 'Золотой ресейл', color: 'rgba(241, 196, 15, 0.95)', price: 1000, unlocked: localStorage.getItem('skin_gold') === 'true' },
+            { id: 'fire', name: 'Огненный Archive', color: 'rgba(231, 76, 60, 0.95)', price: 2000, unlocked: localStorage.getItem('skin_fire') === 'true' }
         ];
+        skins[0].unlocked = true;
 
-        let loadedImages = [];
-        imageFiles.forEach(src => {
-            let img = new Image();
-            img.src = src;
-            loadedImages.push(img);
-        });
+        let currentSkinId = localStorage.getItem('va_current_skin') || 'classic';
 
-        function setSkin(color, el) {
-            document.querySelectorAll('.skin-dot').forEach(d => d.classList.remove('active'));
-            el.classList.add('active');
-            if(color === '#ffffff') currentSkin = 'rgba(255, 255, 255, 0.9)';
-            if(color === '#2ecc71') currentSkin = 'rgba(46, 204, 113, 0.95)';
-            if(color === '#f1c40f') currentSkin = 'rgba(241, 196, 15, 0.95)';
-            if(color === '#e74c3c') currentSkin = 'rgba(231, 76, 60, 0.95)';
+        function getActiveSkinColor() {
+            let s = skins.find(x => x.id === currentSkinId);
+            return s ? s.color : 'rgba(255, 255, 255, 0.9)';
+        }
+
+        function renderShop() {
+            let list = document.getElementById('shopList');
+            list.innerHTML = '';
+            document.getElementById('shopBestScore').innerText = highscore;
+
+            skins.forEach(skin => {
+                let isSelected = skin.id === currentSkinId;
+                let div = document.createElement('div');
+                div.className = `shop-item ${isSelected ? 'selected' : ''}`;
+                
+                let btnHtml = '';
+                if (isSelected) {
+                    btnHtml = `<span style="color:#2ecc71; font-weight:bold; font-size:11px;">АКТИВНО</span>`;
+                } else if (skin.unlocked) {
+                    btnHtml = `<button class="shop-btn" onclick="selectSkin('${skin.id}')">ВЫБРАТЬ</button>`;
+                } else if (highscore >= skin.price) {
+                    btnHtml = `<button class="shop-btn" style="background:#2ecc71; color:#fff;" onclick="buySkin('${skin.id}')">КУПИТЬ</button>`;
+                } else {
+                    btnHtml = `<span style="color:#777; font-size:11px;">🔒 От ${skin.price}</span>`;
+                }
+
+                div.innerHTML = `<span>${skin.name}</span>${btnHtml}`;
+                list.appendChild(div);
+            });
+        }
+
+        function selectSkin(id) {
+            currentSkinId = id;
+            localStorage.setItem('va_current_skin', id);
+            renderShop();
+        }
+
+        function buySkin(id) {
+            let skin = skins.find(s => s.id === id);
+            if (skin && highscore >= skin.price) {
+                skin.unlocked = true;
+                localStorage.setItem(`skin_${id}`, 'true');
+                selectSkin(id);
+            }
         }
 
         let audioCtx = null;
+        let bgmInterval = null;
+
         function initAudio() {
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -328,6 +369,34 @@
             if (audioCtx.state === 'suspended') {
                 audioCtx.resume();
             }
+            startBGM();
+        }
+
+        function startBGM() {
+            if (bgmInterval) return;
+            let notes = [220, 247.05, 261.63, 293.66, 329.63, 349.23, 392.00];
+            let bassNotes = [110, 130.81, 146.83, 98.00];
+            let step = 0;
+
+            bgmInterval = setInterval(() => {
+                if (!isPlaying || !audioCtx) return;
+                try {
+                    let osc = audioCtx.createOscillator();
+                    let gain = audioCtx.createGain();
+                    osc.type = 'triangle';
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+
+                    let freq = notes[step % notes.length];
+                    if (step % 4 === 0) freq = bassNotes[(step / 4) % bassNotes.length];
+
+                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+                    step++;
+                } catch(e) {}
+            }, 300);
         }
 
         function playSound(type) {
@@ -342,20 +411,27 @@
                 if (type === 'slice') {
                     osc.frequency.setValueAtTime(350, audioCtx.currentTime);
                     osc.frequency.exponentialRampToValueAtTime(850, audioCtx.currentTime + 0.08);
-                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
                     gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.08);
                     osc.start(); osc.stop(audioCtx.currentTime + 0.08);
                 } else if (type === 'gold') {
                     osc.frequency.setValueAtTime(600, audioCtx.currentTime);
                     osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.2);
-                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
                     gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2);
                     osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+                } else if (type === 'freeze') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.3);
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.3);
                 } else if (type === 'fake') {
                     osc.type = 'sawtooth';
                     osc.frequency.setValueAtTime(140, audioCtx.currentTime);
                     osc.frequency.linearRampToValueAtTime(40, audioCtx.currentTime + 0.3);
-                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
                     gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
                     osc.start(); osc.stop(audioCtx.currentTime + 0.3);
                 }
@@ -365,10 +441,17 @@
         function showMenu() {
             isPlaying = false;
             document.getElementById('mainMenu').classList.remove('hidden');
+            document.getElementById('shopScreen').classList.add('hidden');
             document.getElementById('leaderboardScreen').classList.add('hidden');
             document.getElementById('rulesScreen').classList.add('hidden');
             document.getElementById('gameOverScreen').classList.add('hidden');
             document.getElementById('ui').style.display = 'none';
+        }
+
+        function showShop() {
+            renderShop();
+            document.getElementById('mainMenu').classList.add('hidden');
+            document.getElementById('shopScreen').classList.remove('hidden');
         }
 
         function showLeaderboard() {
@@ -378,12 +461,32 @@
 
         function showRules() {
             document.getElementById('mainMenu').classList.add('hidden');
-            document.getElementById('rulesScreen').classList.remove('hidden');
+            document.getElementById('rulesScreen').classList.add('hidden');
         }
 
         function contactAdmin() {
             window.location.href = "https://t.me/darkse11";
         }
+
+        // Подключаем файлы по порядку со скриншота GitHub
+        const rawItems = [
+            { file: "IMG_B6DA3E141F57-1.jpeg", isGold: false, isFreeze: false, isBomb: false },
+            { file: "IMG_B6DA3E141F57-2.jpeg", isGold: false, isFreeze: false, isBomb: false },
+            { file: "IMG_B6DA3E141F57-3.jpeg", isGold: false, isFreeze: false, isBomb: false },
+            { file: "IMG_B6DA3E141F57-4.jpeg", isGold: false, isFreeze: false, isBomb: false },
+            { file: "IMG_B6DA3E141F57-5.jpeg", isGold: false, isFreeze: false, isBomb: false },
+            { file: "IMG_B6DA3E141F57-6.jpeg", isGold: false, isFreeze: false, isBomb: false },
+            { file: "IMG_B6DA3E141F57-7.jpeg", isGold: false, isFreeze: false, isBomb: false },
+            { file: "IMG_B6DA3E141F57-8.jpeg", isGold: false, isFreeze: false, isBomb: false },
+            { file: "IMG_B6DA3E141F57-9.jpeg", isGold: true,  isFreeze: false, isBomb: false }, // Золотой дроп
+            { file: "IMG_B6DA3E141F57-10.jpeg", isGold: false, isFreeze: true,  isBomb: false }  // 10-й файл переведен под часики заморозки
+        ];
+
+        const loadedItems = rawItems.map(item => {
+            const img = new Image();
+            img.src = item.file;
+            return { ...item, img: img };
+        });
 
         class Item {
             constructor() {
@@ -393,39 +496,35 @@
                 this.vx = (Math.random() - 0.5) * 6;
                 this.vy = -(Math.random() * 5 + 13.5) * Math.min(speedMult, 1.4);
                 this.gravity = 0.35;
-
+                this.size = 85;
+                
                 let rand = Math.random();
                 if (feverMode) {
-                    let cleanImgs = loadedImages.slice(0, 8);
-                    this.img = cleanImgs[Math.floor(Math.random() * cleanImgs.length)];
-                    this.isBomb = false;
-                    this.isGold = false;
-                } else if (rand < 0.1) {
-                    this.img = loadedImages[8] || loadedImages[0]; // Золотая картинка (9-я)
-                    this.isGold = true;
-                    this.isBomb = false;
+                    let cleanItems = loadedItems.filter(i => !i.isBomb);
+                    this.data = cleanItems[Math.floor(Math.random() * cleanItems.length)];
+                } else if (rand < 0.08) {
+                    this.data = loadedItems.find(i => i.isGold);
+                } else if (rand < 0.15) {
+                    this.data = loadedItems.find(i => i.isFreeze);
                 } else if (rand < 0.3) {
-                    this.img = loadedImages[9] || loadedImages[1]; // Реплика/бомба (10-я)
-                    this.isBomb = true;
-                    this.isGold = false;
+                    // Паленка генерируется программно крестиком
+                    this.data = { isBomb: true };
                 } else {
-                    let normalImgs = loadedImages.slice(0, 8);
-                    this.img = normalImgs[Math.floor(Math.random() * normalImgs.length)];
-                    this.isBomb = false;
-                    this.isGold = false;
+                    let normalItems = loadedItems.filter(i => !i.isGold && !i.isFreeze);
+                    this.data = normalItems[Math.floor(Math.random() * normalItems.length)];
                 }
 
                 this.sliced = false;
                 this.angle = 0;
                 this.vAngle = (Math.random() - 0.5) * 0.08;
-                this.size = 70; // Размер картинки на холсте
             }
 
             update() {
-                this.x += this.vx;
-                this.y += this.vy;
-                this.vy += this.gravity;
-                this.angle += this.vAngle;
+                let m = freezeTimer > 0 ? 0.4 : 1; // Замедление при заморозке
+                this.x += this.vx * m;
+                this.y += this.vy * m;
+                this.vy += this.gravity * m;
+                this.angle += this.vAngle * m;
             }
 
             draw() {
@@ -433,12 +532,45 @@
                 ctx.translate(this.x, this.y);
                 ctx.rotate(this.angle);
 
-                if (this.img && this.img.complete && this.img.naturalWidth !== 0) {
-                    ctx.drawImage(this.img, -this.size / 2, -this.size / 2, this.size, this.size);
+                if (this.data.isBomb) {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 38, 0, Math.PI * 2);
+                    ctx.fillStyle = "rgba(255, 0, 0, 0.25)";
+                    ctx.fill();
+                    ctx.lineWidth = 4;
+                    ctx.strokeStyle = "#ff0000";
+                    ctx.stroke();
+
+                    ctx.font = 'bold 28px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText("❌", 0, 0);
                 } else {
-                    // Заглушка, если картинка еще грузится
-                    ctx.fillStyle = '#fff';
-                    ctx.fillRect(-35, -35, 70, 70);
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.size / 2 + 4, 0, Math.PI * 2);
+                    ctx.fillStyle = "rgba(15, 15, 15, 0.85)";
+                    ctx.fill();
+                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = this.data.isGold ? "#ffd700" : (this.data.isFreeze ? "#3498db" : "rgba(255, 255, 255, 0.2)");
+                    ctx.stroke();
+
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.size / 2, 0, Math.PI * 2);
+                    ctx.clip();
+
+                    try {
+                        ctx.drawImage(this.data.img, -this.size / 2, -this.size / 2, this.size, this.size);
+                    } catch(e) {}
+                    ctx.restore();
+
+                    if (this.data.isFreeze) {
+                        ctx.font = 'bold 18px sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillStyle = '#3498db';
+                        ctx.fillText("⏱️", 0, 0);
+                    }
                 }
 
                 ctx.restore();
@@ -459,34 +591,6 @@
                 ctx.fillStyle = this.color;
                 ctx.textAlign = 'center';
                 ctx.fillText(this.text, this.x, this.y);
-                ctx.restore();
-            }
-        }
-
-        class HalfPiece {
-            constructor(x, y, img, isLeft) {
-                this.x = x; this.y = y;
-                this.img = img;
-                this.vx = isLeft ? - (Math.random() * 4 + 2) : (Math.random() * 4 + 2);
-                this.vy = -(Math.random() * 3 + 2);
-                this.gravity = 0.4;
-                this.alpha = 1;
-                this.angle = 0; this.vAngle = isLeft ? -0.1 : 0.1;
-                this.size = 70;
-            }
-            update() {
-                this.x += this.vx; this.y += this.vy;
-                this.vy += this.gravity; this.angle += this.vAngle;
-                this.alpha -= 0.03;
-            }
-            draw() {
-                ctx.save();
-                ctx.translate(this.x, this.y);
-                ctx.rotate(this.angle);
-                ctx.globalAlpha = Math.max(0, this.alpha);
-                if (this.img && this.img.complete) {
-                    ctx.drawImage(this.img, -this.size / 2, -this.size / 2, this.size, this.size);
-                }
                 ctx.restore();
             }
         }
@@ -518,11 +622,12 @@
             particles = [];
             floatTexts = [];
             feverMode = false;
+            freezeTimer = 0;
             nextFeverScore = 500;
             isPlaying = true;
             document.getElementById('score').innerText = score;
             document.getElementById('lives').innerText = lives;
-
+            
             document.getElementById('mainMenu').classList.add('hidden');
             document.getElementById('gameOverScreen').classList.add('hidden');
             document.getElementById('ui').style.display = 'flex';
@@ -538,7 +643,7 @@
             isPlaying = false;
             document.getElementById('ui').style.display = 'none';
             playSound('fake');
-
+            
             if (score > highscore) {
                 highscore = score;
                 localStorage.setItem('va_highscore', highscore);
@@ -546,7 +651,7 @@
             }
 
             document.getElementById('gameOverScreen').classList.remove('hidden');
-
+            
             let promoText = `Твой итоговый счет: ${score}. `;
             let promoBlock = document.getElementById('promoBlock');
 
@@ -579,11 +684,11 @@
                     let dist = Math.hypot(item.x - x, item.y - y);
                     if (dist < 60) {
                         item.sliced = true;
-                        if (item.isBomb) {
+                        if (item.data.isBomb) {
                             lives = 0;
                             document.getElementById('lives').innerText = lives;
                             gameOver();
-                        } else if (item.isGold) {
+                        } else if (item.data.isGold) {
                             playSound('gold');
                             let mult = feverMode ? 3 : 1;
                             score += 50 * mult;
@@ -592,11 +697,18 @@
                             for (let i = 0; i < 20; i++) {
                                 particles.push(new Particle(item.x, item.y, "#ffd700"));
                             }
+                        } else if (item.data.isFreeze) {
+                            playSound('freeze');
+                            freezeTimer = 180; // 3 секунды заморозки
+                            floatTexts.push(new FloatingText(item.x, item.y, "⏱️ FREEZE!", "#3498db"));
+                            for (let i = 0; i < 15; i++) {
+                                particles.push(new Particle(item.x, item.y, "#3498db"));
+                            }
                         } else {
                             playSound('slice');
                             combo++;
                             let points = feverMode ? 30 : 10;
-                            let txt = feverMode ? "+30 FEVER" : "+10";
+                            let txt = feverMode ? "+30 FEVER" : "+10 VA";
                             if (combo >= 3 && !feverMode) {
                                 points = 20;
                                 txt = "+20 COMBO";
@@ -604,10 +716,8 @@
                             }
                             score += points;
                             document.getElementById('score').innerText = score;
-                            floatTexts.push(new FloatingText(item.x, item.y, txt, "#2ecc71"));
-
-                            particles.push(new HalfPiece(item.x, item.y, item.img, true));
-                            particles.push(new HalfPiece(item.x, item.y, item.img, false));
+                            floatTexts.push(new FloatingText(item.x, item.y, txt, "#ffffff"));
+                            
                             for (let i = 0; i < 12; i++) {
                                 particles.push(new Particle(item.x, item.y, "#ffffff"));
                             }
@@ -626,20 +736,32 @@
 
         window.addEventListener('mousemove', e => addTouch(e.clientX, e.clientY));
         window.addEventListener('touchmove', e => {
-            if (e.touches && e.touches[0]) {
-                let touch = e.touches[0];
-                addTouch(touch.clientX, touch.clientY);
-            }
-        }, { passive: false });
+            let touch = e.touches[0];
+            addTouch(touch.clientX, touch.clientY);
+        });
 
         let spawnTimer = 0;
         function animate() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+            // Отрисовка киберпанк-неоновой сетки на фоне
+            gridOffset = (gridOffset + (freezeTimer > 0 ? 0.5 : 1.5)) % 40;
+            ctx.strokeStyle = feverMode ? "rgba(46, 204, 113, 0.08)" : "rgba(255, 255, 255, 0.03)";
+            ctx.lineWidth = 1;
+            for (let x = 0; x < canvas.width; x += 40) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+            }
+            for (let y = gridOffset; y < canvas.height; y += 40) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+            }
+
             if (isPlaying) {
                 if (feverMode) {
                     feverTimer--;
                     if (feverTimer <= 0) feverMode = false;
+                }
+                if (freezeTimer > 0) {
+                    freezeTimer--;
                 }
 
                 spawnTimer++;
@@ -656,7 +778,7 @@
 
                     if (!item.sliced && item.y > canvas.height + 100) {
                         items.splice(i, 1);
-                        if (!item.isBomb) {
+                        if (!item.data.isBomb && !item.data.isFreeze) {
                             combo = 0;
                             lives--;
                             document.getElementById('lives').innerText = lives;
@@ -688,7 +810,7 @@
                 for (let i = 1; i < trail.length; i++) {
                     ctx.lineTo(trail[i].x, trail[i].y);
                 }
-                ctx.strokeStyle = currentSkin;
+                ctx.strokeStyle = getActiveSkinColor();
                 ctx.lineWidth = 5;
                 ctx.stroke();
             }
