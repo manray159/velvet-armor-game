@@ -1,4 +1,3 @@
-Html code V/A
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -6,19 +5,26 @@ Html code V/A
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Velvet Armor — Slicer</title>
     <style>
-        body {
+        html, body {
             margin: 0;
             padding: 0;
+            width: 100%;
+            height: 100%;
             background: #050505;
             color: #fff;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             overflow: hidden;
+            position: fixed;
             touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
         #gameCanvas {
             display: block;
             background: radial-gradient(circle, #1a1a1a 0%, #000000 100%);
             cursor: crosshair;
+            width: 100%;
+            height: 100%;
         }
         #ui {
             position: absolute;
@@ -185,6 +191,12 @@ Html code V/A
 </head>
 <body>
 
+    <script>
+        document.addEventListener('touchmove', function(e) {
+            e.preventDefault();
+        }, { passive: false });
+    </script>
+
     <div id="ui">
         <div class="score-box">СЧЕТ: <span id="score">0</span></div>
         <div class="score-box">ЖИЗНИ: <span id="lives">3</span> ❤️</div>
@@ -278,6 +290,27 @@ Html code V/A
         let highscore = localStorage.getItem('va_highscore') || 0;
         document.getElementById('lbBest').innerText = highscore + " очков";
 
+        // Загружаем твои картинки из репозитория
+        const imageFiles = [
+            "IMG_B6DA3E141F57-1.jpeg",
+            "IMG_B6DA3E141F57-2.jpeg",
+            "IMG_B6DA3E141F57-3.jpeg",
+            "IMG_B6DA3E141F57-4.jpeg",
+            "IMG_B6DA3E141F57-5.jpeg",
+            "IMG_B6DA3E141F57-6.jpeg",
+            "IMG_B6DA3E141F57-7.jpeg",
+            "IMG_B6DA3E141F57-8.jpeg",
+            "IMG_B6DA3E141F57-9.jpeg",
+            "IMG_B6DA3E141F57-10.jpeg"
+        ];
+
+        let loadedImages = [];
+        imageFiles.forEach(src => {
+            let img = new Image();
+            img.src = src;
+            loadedImages.push(img);
+        });
+
         function setSkin(color, el) {
             document.querySelectorAll('.skin-dot').forEach(d => d.classList.remove('active'));
             el.classList.add('active');
@@ -352,45 +385,40 @@ Html code V/A
             window.location.href = "https://t.me/darkse11";
         }
 
-        const itemTypes = [
-            { name: "Stone Island Tee", color: "#3498db", kind: "tee" },
-            { name: "Valentino Kicks", color: "#9b59b6", kind: "sneaker" },
-            { name: "Gucci Jacket", color: "#1abc9c", kind: "jacket" },
-            { name: "Raf Simons", color: "#f1c40f", kind: "sneaker" },
-            { name: "Rick Owens", color: "#ffffff", kind: "sneaker" },
-            { name: "Off-White Hoodie", color: "#e74c3c", kind: "hoodie" },
-            { name: "Olimpika Zip", color: "#2ecc71", kind: "zip" },
-            { name: "Maison Margiela", color: "#e84393", kind: "sneaker" },
-            { name: "⭐ GOLDEN DROP", color: "#ffd700", kind: "gold", isGold: true },
-            { name: "❌ Убитая реплика", color: "#ff0000", kind: "fake", isBomb: true }
-        ];
-
         class Item {
             constructor() {
                 this.x = Math.random() * (canvas.width - 160) + 80;
                 this.y = canvas.height + 80;
-                let speedMult = 1 + (score / 1500); // Усложнение по мере роста очков
+                let speedMult = 1 + (score / 1500);
                 this.vx = (Math.random() - 0.5) * 6;
                 this.vy = -(Math.random() * 5 + 13.5) * Math.min(speedMult, 1.4);
                 this.gravity = 0.35;
 
                 let rand = Math.random();
                 if (feverMode) {
-                    // В режиме Лихорадки только нормальный и золотой шмот
-                    let cleanItems = itemTypes.filter(i => !i.isBomb);
-                    this.data = cleanItems[Math.floor(Math.random() * cleanItems.length)];
+                    let cleanImgs = loadedImages.slice(0, 8);
+                    this.img = cleanImgs[Math.floor(Math.random() * cleanImgs.length)];
+                    this.isBomb = false;
+                    this.isGold = false;
                 } else if (rand < 0.1) {
-                    this.data = itemTypes.find(i => i.isGold);
+                    this.img = loadedImages[8] || loadedImages[0]; // Золотая картинка (9-я)
+                    this.isGold = true;
+                    this.isBomb = false;
                 } else if (rand < 0.3) {
-                    this.data = itemTypes.find(i => i.isBomb);
+                    this.img = loadedImages[9] || loadedImages[1]; // Реплика/бомба (10-я)
+                    this.isBomb = true;
+                    this.isGold = false;
                 } else {
-                    let normalItems = itemTypes.filter(i => !i.isGold && !i.isBomb);
-                    this.data = normalItems[Math.floor(Math.random() * normalItems.length)];
+                    let normalImgs = loadedImages.slice(0, 8);
+                    this.img = normalImgs[Math.floor(Math.random() * normalImgs.length)];
+                    this.isBomb = false;
+                    this.isGold = false;
                 }
 
                 this.sliced = false;
                 this.angle = 0;
                 this.vAngle = (Math.random() - 0.5) * 0.08;
+                this.size = 70; // Размер картинки на холсте
             }
 
             update() {
@@ -405,80 +433,12 @@ Html code V/A
                 ctx.translate(this.x, this.y);
                 ctx.rotate(this.angle);
 
-                ctx.strokeStyle = this.data.color;
-                ctx.fillStyle = this.data.color;
-                ctx.lineWidth = this.data.isGold ? 4 : 3;
-
-                if (this.data.kind === "sneaker") {
-                    ctx.beginPath();
-                    ctx.roundRect(-35, -15, 70, 30, [10, 15, 8, 8]);
-                    ctx.fillStyle = "rgba(15, 15, 15, 0.95)";
-                    ctx.fill();
-                    ctx.stroke();
-                    ctx.fillStyle = this.data.color;
-                    ctx.fillRect(-37, 12, 74, 7);
-                } else if (this.data.kind === "hoodie" || this.data.kind === "zip") {
-                    ctx.beginPath();
-                    ctx.roundRect(-30, -25, 60, 50, [15, 15, 5, 5]);
-                    ctx.fillStyle = "rgba(15, 15, 15, 0.95)";
-                    ctx.fill();
-                    ctx.stroke();
-                    ctx.beginPath();
-                    ctx.arc(0, -22, 14, Math.PI, 0, false);
-                    ctx.stroke();
-                } else if (this.data.kind === "jacket") {
-                    ctx.beginPath();
-                    ctx.roundRect(-32, -28, 64, 52, [8, 8, 4, 4]);
-                    ctx.fillStyle = "rgba(15, 15, 15, 0.95)";
-                    ctx.fill();
-                    ctx.stroke();
-                    ctx.beginPath();
-                    ctx.moveTo(0, -28); ctx.lineTo(0, 24);
-                    ctx.stroke();
-                } else if (this.data.kind === "tee") {
-                    ctx.beginPath();
-                    ctx.moveTo(-20, -25); ctx.lineTo(-35, -10); ctx.lineTo(-20, -5);
-                    ctx.lineTo(-20, 25); ctx.lineTo(20, 25); ctx.lineTo(20, -5);
-                    ctx.lineTo(35, -10); ctx.lineTo(20, -25); ctx.closePath();
-                    ctx.fillStyle = "rgba(15, 15, 15, 0.95)";
-                    ctx.fill();
-                    ctx.stroke();
-                } else if (this.data.kind === "gold") {
-                    ctx.beginPath();
-                    ctx.arc(0, 0, 36, 0, Math.PI * 2);
-                    ctx.fillStyle = "rgba(255, 215, 0, 0.3)";
-                    ctx.fill();
-                    ctx.stroke();
-                    ctx.font = 'bold 22px sans-serif';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText("⭐", 0, 0);
-                } else if (this.data.kind === "fake") {
-                    ctx.beginPath();
-                    ctx.arc(0, 0, 34, 0, Math.PI * 2);
-                    ctx.fillStyle = "rgba(255, 0, 0, 0.25)";
-                    ctx.fill();
-                    ctx.lineWidth = 4;
-                    ctx.stroke();
-                    ctx.font = 'bold 26px sans-serif';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillStyle = '#ff0000';
-                    ctx.fillText("❌", 0, 0);
-                }
-
-                if (this.data.kind !== "fake" && this.data.kind !== "gold") {
-                    ctx.font = 'bold 11px -apple-system, sans-serif';
-                    ctx.fillStyle = '#ffffff';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'top';
-                    ctx.fillText(this.data.name, 0, 35);
-                } else if (this.data.kind === "gold") {
-                    ctx.font = 'bold 12px -apple-system, sans-serif';
-                    ctx.fillStyle = '#ffd700';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'top';
-                    ctx.fillText("GOLDEN DROP", 0, 40);
+                if (this.img && this.img.complete && this.img.naturalWidth !== 0) {
+                    ctx.drawImage(this.img, -this.size / 2, -this.size / 2, this.size, this.size);
+                } else {
+                    // Заглушка, если картинка еще грузится
+                    ctx.fillStyle = '#fff';
+                    ctx.fillRect(-35, -35, 70, 70);
                 }
 
                 ctx.restore();
@@ -504,13 +464,15 @@ Html code V/A
         }
 
         class HalfPiece {
-            constructor(x, y, color, isLeft) {
+            constructor(x, y, img, isLeft) {
                 this.x = x; this.y = y;
+                this.img = img;
                 this.vx = isLeft ? - (Math.random() * 4 + 2) : (Math.random() * 4 + 2);
                 this.vy = -(Math.random() * 3 + 2);
                 this.gravity = 0.4;
-                this.alpha = 1; this.color = color;
+                this.alpha = 1;
                 this.angle = 0; this.vAngle = isLeft ? -0.1 : 0.1;
+                this.size = 70;
             }
             update() {
                 this.x += this.vx; this.y += this.vy;
@@ -522,8 +484,9 @@ Html code V/A
                 ctx.translate(this.x, this.y);
                 ctx.rotate(this.angle);
                 ctx.globalAlpha = Math.max(0, this.alpha);
-                ctx.fillStyle = this.color;
-                ctx.fillRect(-15, -8, 30, 16);
+                if (this.img && this.img.complete) {
+                    ctx.drawImage(this.img, -this.size / 2, -this.size / 2, this.size, this.size);
+                }
                 ctx.restore();
             }
         }
@@ -616,11 +579,11 @@ Html code V/A
                     let dist = Math.hypot(item.x - x, item.y - y);
                     if (dist < 60) {
                         item.sliced = true;
-                        if (item.data.isBomb) {
+                        if (item.isBomb) {
                             lives = 0;
                             document.getElementById('lives').innerText = lives;
                             gameOver();
-                        } else if (item.data.isGold) {
+                        } else if (item.isGold) {
                             playSound('gold');
                             let mult = feverMode ? 3 : 1;
                             score += 50 * mult;
@@ -641,18 +604,17 @@ Html code V/A
                             }
                             score += points;
                             document.getElementById('score').innerText = score;
-                            floatTexts.push(new FloatingText(item.x, item.y, txt, item.data.color));
+                            floatTexts.push(new FloatingText(item.x, item.y, txt, "#2ecc71"));
 
-                            particles.push(new HalfPiece(item.x, item.y, item.data.color, true));
-                            particles.push(new HalfPiece(item.x, item.y, item.data.color, false));
+                            particles.push(new HalfPiece(item.x, item.y, item.img, true));
+                            particles.push(new HalfPiece(item.x, item.y, item.img, false));
                             for (let i = 0; i < 12; i++) {
-                                particles.push(new Particle(item.x, item.y, item.data.color));
+                                particles.push(new Particle(item.x, item.y, "#ffffff"));
                             }
 
-                            // Проверка активации лихорадки Black Friday
                             if (score >= nextFeverScore && !feverMode) {
                                 feverMode = true;
-                                feverTimer = 250; // Длительность лихорадки
+                                feverTimer = 250;
                                 triggerPopup('feverPopup');
                                 nextFeverScore += 500;
                             }
@@ -664,9 +626,11 @@ Html code V/A
 
         window.addEventListener('mousemove', e => addTouch(e.clientX, e.clientY));
         window.addEventListener('touchmove', e => {
-            let touch = e.touches[0];
-            addTouch(touch.clientX, touch.clientY);
-        });
+            if (e.touches && e.touches[0]) {
+                let touch = e.touches[0];
+                addTouch(touch.clientX, touch.clientY);
+            }
+        }, { passive: false });
 
         let spawnTimer = 0;
         function animate() {
@@ -692,7 +656,7 @@ Html code V/A
 
                     if (!item.sliced && item.y > canvas.height + 100) {
                         items.splice(i, 1);
-                        if (!item.data.isBomb) {
+                        if (!item.isBomb) {
                             combo = 0;
                             lives--;
                             document.getElementById('lives').innerText = lives;
