@@ -1,3 +1,4 @@
+Html code V/A
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -5,26 +6,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Velvet Armor — Slicer</title>
     <style>
-        html, body {
+        body {
             margin: 0;
             padding: 0;
-            width: 100%;
-            height: 100%;
             background: #050505;
             color: #fff;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             overflow: hidden;
-            position: fixed;
             touch-action: none;
-            -webkit-user-select: none;
-            user-select: none;
         }
         #gameCanvas {
             display: block;
             background: radial-gradient(circle, #1a1a1a 0%, #000000 100%);
             cursor: crosshair;
-            width: 100%;
-            height: 100%;
         }
         #ui {
             position: absolute;
@@ -190,12 +184,6 @@
     </style>
 </head>
 <body>
-
-    <script>
-        document.addEventListener('touchmove', function(e) {
-            e.preventDefault();
-        }, { passive: false });
-    </script>
 
     <div id="ui">
         <div class="score-box">СЧЕТ: <span id="score">0</span></div>
@@ -381,13 +369,14 @@
             constructor() {
                 this.x = Math.random() * (canvas.width - 160) + 80;
                 this.y = canvas.height + 80;
-                let speedMult = 1 + (score / 1500);
+                let speedMult = 1 + (score / 1500); // Усложнение по мере роста очков
                 this.vx = (Math.random() - 0.5) * 6;
                 this.vy = -(Math.random() * 5 + 13.5) * Math.min(speedMult, 1.4);
                 this.gravity = 0.35;
 
                 let rand = Math.random();
                 if (feverMode) {
+                    // В режиме Лихорадки только нормальный и золотой шмот
                     let cleanItems = itemTypes.filter(i => !i.isBomb);
                     this.data = cleanItems[Math.floor(Math.random() * cleanItems.length)];
                 } else if (rand < 0.1) {
@@ -660,9 +649,10 @@
                                 particles.push(new Particle(item.x, item.y, item.data.color));
                             }
 
+                            // Проверка активации лихорадки Black Friday
                             if (score >= nextFeverScore && !feverMode) {
                                 feverMode = true;
-                                feverTimer = 250;
+                                feverTimer = 250; // Длительность лихорадки
                                 triggerPopup('feverPopup');
                                 nextFeverScore += 500;
                             }
@@ -674,11 +664,9 @@
 
         window.addEventListener('mousemove', e => addTouch(e.clientX, e.clientY));
         window.addEventListener('touchmove', e => {
-            if (e.touches && e.touches[0]) {
-                let touch = e.touches[0];
-                addTouch(touch.clientX, touch.clientY);
-            }
-        }, { passive: false });
+            let touch = e.touches[0];
+            addTouch(touch.clientX, touch.clientY);
+        });
 
         let spawnTimer = 0;
         function animate() {
