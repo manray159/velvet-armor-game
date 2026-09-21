@@ -27,14 +27,14 @@
             display: flex;
             justify-content: space-between;
             pointer-events: none;
-            font-size: 20px;
+            font-size: 18px;
             font-weight: bold;
             letter-spacing: 1px;
             z-index: 5;
         }
         .score-box {
             background: rgba(255, 255, 255, 0.08);
-            padding: 10px 20px;
+            padding: 8px 16px;
             border-radius: 8px;
             border: 1px solid rgba(255, 255, 255, 0.15);
             backdrop-filter: blur(5px);
@@ -42,37 +42,64 @@
         #startScreen {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(5, 5, 5, 0.95);
+            background: rgba(5, 5, 5, 0.96);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             z-index: 10;
-        }
-        h1 {
-            font-size: 28px;
-            margin-bottom: 5px;
-            letter-spacing: 2px;
+            padding: 20px;
+            box-sizing: border-box;
             text-align: center;
         }
-        p {
-            color: #888;
-            margin-bottom: 25px;
+        h1 {
+            font-size: 32px;
+            margin: 0 0 10px 0;
+            letter-spacing: 3px;
+            background: linear-gradient(45deg, #fff, #888);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .subtitle {
+            color: #aaa;
             font-size: 14px;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+        .record-badge {
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            color: #ffd700;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin-bottom: 30px;
+            font-weight: bold;
         }
         .btn {
             background: #fff;
             color: #000;
             border: none;
-            padding: 15px 40px;
+            padding: 16px 45px;
             font-size: 16px;
             font-weight: bold;
-            border-radius: 8px;
+            border-radius: 12px;
             cursor: pointer;
             transition: 0.2s;
+            box-shadow: 0 4px 20px rgba(255,255,255,0.2);
         }
         .btn:active {
             transform: scale(0.95);
+        }
+        .promo-card {
+            margin-top: 20px;
+            padding: 12px;
+            background: rgba(46, 204, 113, 0.1);
+            border: 1px dashed #2ecc71;
+            border-radius: 8px;
+            color: #2ecc71;
+            font-size: 13px;
+            display: none;
         }
     </style>
 </head>
@@ -80,13 +107,15 @@
 
     <div id="ui">
         <div class="score-box">СЧЕТ: <span id="score">0</span></div>
-        <div class="score-box">ПРАВЫХ: <span id="missed">0</span> / 3</div>
+        <div class="score-box">ЖИЗНИ: <span id="lives">3</span> ❤️</div>
     </div>
 
     <div id="startScreen">
-        <h1>V / A — SLICER</h1>
-        <p>Режь брендовый шмот, обходи паленку</p>
-        <button class="btn" onclick="startGame()">ИГРАТЬ</button>
+        <h1>VELVET ARMOR</h1>
+        <div class="subtitle">Режь оригинальный шмот, обходи паленку.<br>100 очков = 1% скидки (максимум 3%)</div>
+        <div class="record-badge" id="recordText">🏆 Твой рекорд: 0 очков</div>
+        <button class="btn" onclick="startGame()">НАЧАТЬ НАРЕЗКУ</button>
+        <div class="promo-card" id="promoBlock"></div>
     </div>
 
     <canvas id="gameCanvas"></canvas>
@@ -103,37 +132,26 @@
         resize();
 
         let score = 0;
-        let missed = 0;
+        let lives = 3;
         let isPlaying = false;
         let items = [];
         let particles = [];
         let trail = [];
 
-        // База вещей с реальными PNG-изображениями (прозрачный фон)
-        const itemSources = [
-            { name: "Stone Island Tee", url: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=300&auto=format&fit=crop&q=80" },
-            { name: "Valentino Kicks", url: "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=300&auto=format&fit=crop&q=80" },
-            { name: "Gucci Jacket", url: "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=300&auto=format&fit=crop&q=80" },
-            { name: "Givenchy Tee", url: "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=300&auto=format&fit=crop&q=80" },
-            { name: "Raf Simons", url: "https://images.unsplash.com/photo-1560769629-975ec94e6a86?w=300&auto=format&fit=crop&q=80" },
-            { name: "Rick Owens Geobasket", url: "https://images.unsplash.com/photo-1608256246200-53e635b5b65f?w=300&auto=format&fit=crop&q=80" },
-            { name: "Off-White Hoodie", url: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=300&auto=format&fit=crop&q=80" },
-            { name: "Nike Sneakers", url: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=300&auto=format&fit=crop&q=80" },
-            { name: "Puma Archive", url: "https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=300&auto=format&fit=crop&q=80" },
-            { name: "Maison Margiela", url: "https://images.unsplash.com/photo-1539185441755-769473a23570?w=300&auto=format&fit=crop&q=80" },
-            { name: "Olimpika Zip", url: "https://images.unsplash.com/photo-1578632767115-351597cf2477?w=300&auto=format&fit=crop&q=80" },
-            { name: "❌ Убитая реплика", url: "", isBomb: true }
-        ];
+        let highscore = localStorage.getItem('va_highscore') || 0;
+        document.getElementById('recordText').innerText = `🏆 Твой рекорд: ${highscore} очков`;
 
-        // Предзагрузка картинок в память браузера для плавной игры
-        const loadedItems = itemSources.map(item => {
-            if (item.url) {
-                const img = new Image();
-                img.src = item.url;
-                return { ...item, img: img };
-            }
-            return { ...item, img: null };
-        });
+        const itemTypes = [
+            { name: "Stone Island Tee", color: "#3498db", kind: "tee" },
+            { name: "Valentino Kicks", color: "#9b59b6", kind: "sneaker" },
+            { name: "Gucci Jacket", color: "#1abc9c", kind: "jacket" },
+            { name: "Raf Simons", color: "#f1c40f", kind: "sneaker" },
+            { name: "Rick Owens", color: "#ffffff", kind: "sneaker" },
+            { name: "Off-White Hoodie", color: "#e74c3c", kind: "hoodie" },
+            { name: "Olimpika Zip", color: "#2ecc71", kind: "zip" },
+            { name: "Maison Margiela", color: "#e84393", kind: "sneaker" },
+            { name: "❌ Убитая реплика", color: "#ff0000", kind: "fake", isBomb: true }
+        ];
 
         class Item {
             constructor() {
@@ -142,8 +160,7 @@
                 this.vx = (Math.random() - 0.5) * 6;
                 this.vy = -(Math.random() * 5 + 13);
                 this.gravity = 0.35;
-                this.data = loadedItems[Math.floor(Math.random() * loadedItems.length)];
-                this.size = 85; // Размер картинки в игре
+                this.data = itemTypes[Math.floor(Math.random() * itemTypes.length)];
                 this.sliced = false;
                 this.angle = 0;
                 this.vAngle = (Math.random() - 0.5) * 0.08;
@@ -161,47 +178,64 @@
                 ctx.translate(this.x, this.y);
                 ctx.rotate(this.angle);
 
-                if (this.data.isBomb) {
-                    // Рисуем стильный маркер паленки
-                    ctx.beginPath();
-                    ctx.arc(0, 0, 40, 0, Math.PI * 2);
-                    ctx.fillStyle = "rgba(255, 0, 0, 0.3)";
-                    ctx.fill();
-                    ctx.lineWidth = 3;
-                    ctx.strokeStyle = "#ff0000";
-                    ctx.stroke();
+                ctx.strokeStyle = this.data.color;
+                ctx.fillStyle = this.data.color;
+                ctx.lineWidth = 3;
 
+                if (this.data.kind === "sneaker") {
+                    ctx.beginPath();
+                    ctx.roundRect(-35, -15, 70, 30, [10, 15, 8, 8]);
+                    ctx.fillStyle = "rgba(20, 20, 20, 0.9)";
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.fillStyle = this.data.color;
+                    ctx.fillRect(-37, 12, 74, 7);
+                } else if (this.data.kind === "hoodie" || this.data.kind === "zip") {
+                    ctx.beginPath();
+                    ctx.roundRect(-30, -25, 60, 50, [15, 15, 5, 5]);
+                    ctx.fillStyle = "rgba(20, 20, 20, 0.9)";
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.arc(0, -22, 14, Math.PI, 0, false);
+                    ctx.stroke();
+                } else if (this.data.kind === "jacket") {
+                    ctx.beginPath();
+                    ctx.roundRect(-32, -28, 64, 52, [8, 8, 4, 4]);
+                    ctx.fillStyle = "rgba(20, 20, 20, 0.9)";
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(0, -28); ctx.lineTo(0, 24);
+                    ctx.stroke();
+                } else if (this.data.kind === "tee") {
+                    ctx.beginPath();
+                    ctx.moveTo(-20, -25); ctx.lineTo(-35, -10); ctx.lineTo(-20, -5);
+                    ctx.lineTo(-20, 25); ctx.lineTo(20, 25); ctx.lineTo(20, -5);
+                    ctx.lineTo(35, -10); ctx.lineTo(20, -25); ctx.closePath();
+                    ctx.fillStyle = "rgba(20, 20, 20, 0.9)";
+                    ctx.fill();
+                    ctx.stroke();
+                } else if (this.data.kind === "fake") {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 32, 0, Math.PI * 2);
+                    ctx.fillStyle = "rgba(255, 0, 0, 0.25)";
+                    ctx.fill();
+                    ctx.lineWidth = 4;
+                    ctx.stroke();
                     ctx.font = 'bold 24px sans-serif';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
+                    ctx.fillStyle = '#ff0000';
                     ctx.fillText("❌", 0, 0);
-                } else if (this.data.img) {
-                    // Рисуем круглую стильную подложку под вещь
-                    ctx.beginPath();
-                    ctx.arc(0, 0, this.size / 2 + 4, 0, Math.PI * 2);
-                    ctx.fillStyle = "rgba(20, 20, 20, 0.85)";
-                    ctx.fill();
-                    ctx.lineWidth = 2;
-                    ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
-                    ctx.stroke();
+                }
 
-                    // Обрезаем картинку по кругу для красоты
-                    ctx.save();
-                    ctx.beginPath();
-                    ctx.arc(0, 0, this.size / 2, 0, Math.PI * 2);
-                    ctx.clip();
-
-                    try {
-                        ctx.drawImage(this.data.img, -this.size/2, -this.size/2, this.size, this.size);
-                    } catch(e) {}
-                    ctx.restore();
-
-                    // Название бренда под картинкой
+                if (this.data.kind !== "fake") {
                     ctx.font = 'bold 11px -apple-system, sans-serif';
                     ctx.fillStyle = '#ffffff';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'top';
-                    ctx.fillText(this.data.name, 0, this.size / 2 + 6);
+                    ctx.fillText(this.data.name, 0, 34);
                 }
 
                 ctx.restore();
@@ -209,20 +243,14 @@
         }
 
         class Particle {
-            constructor(x, y) {
-                this.x = x;
-                this.y = y;
+            constructor(x, y, color) {
+                this.x = x; this.y = y;
                 this.vx = (Math.random() - 0.5) * 12;
                 this.vy = (Math.random() - 0.5) * 12;
-                this.alpha = 1;
-                this.color = '#ffffff';
+                this.alpha = 1; this.color = color;
                 this.size = Math.random() * 6 + 3;
             }
-            update() {
-                this.x += this.vx;
-                this.y += this.vy;
-                this.alpha -= 0.03;
-            }
+            update() { this.x += this.vx; this.y += this.vy; this.alpha -= 0.03; }
             draw() {
                 ctx.save();
                 ctx.globalAlpha = Math.max(0, this.alpha);
@@ -234,39 +262,68 @@
 
         function startGame() {
             score = 0;
-            missed = 0;
+            lives = 3;
             items = [];
             particles = [];
             isPlaying = true;
             document.getElementById('score').innerText = score;
-            document.getElementById('missed').innerText = missed;
+            document.getElementById('lives').innerText = lives;
             document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('promoBlock').style.display = 'none';
         }
 
         function gameOver() {
             isPlaying = false;
+            
+            if (score > highscore) {
+                highscore = score;
+                localStorage.setItem('va_highscore', highscore);
+                document.getElementById('recordText').innerText = `🏆 Твой рекорд: ${highscore} очков`;
+            }
+
             document.getElementById('startScreen').style.display = 'flex';
-            document.querySelector('#startScreen h1').innerText = "ПОЙМАЛ ПАЛЬ!";
-            document.querySelector('#startScreen p').innerText = `Твой итоговый счет: ${score}`;
+            document.querySelector('#startScreen h1').innerText = "ИГРА ОКОНЧЕНА";
+            
+            let promoText = `Твой счет: ${score}. `;
+            let promoBlock = document.getElementById('promoBlock');
+
+            // Строгая логика: 100 очков = 1%, 200 очков = 2%, от 300 очков = максимум 3%
+            if (score >= 300) {
+                promoText += "🔥 Награда: Максимальная скидка 3% по промокоду <code>VA-SLICER-3</code>";
+                promoBlock.style.display = "block";
+            } else if (score >= 200) {
+                promoText += "⚡️ Награда: Скидка 2% по промокоду <code>VA-SLICER-2</code>";
+                promoBlock.style.display = "block";
+            } else if (score >= 100) {
+                promoText += "✨ Награда: Скидка 1% по промокоду <code>VA-SLICER-1</code>";
+                promoBlock.style.display = "block";
+            } else {
+                promoText += "Набери от 100 очков, чтобы выбить скидку на заказ!";
+                promoBlock.style.display = "none";
+            }
+
+            document.querySelector('#startScreen .subtitle').innerText = promoText;
+            promoBlock.innerHTML = "Сделай скриншот экрана и отправь менеджеру в боте!";
         }
 
         function addTouch(x, y) {
             trail.push({ x, y, time: Date.now() });
-
             if (!isPlaying) return;
 
             items.forEach(item => {
                 if (!item.sliced) {
                     let dist = Math.hypot(item.x - x, item.y - y);
-                    if (dist < 50) {
+                    if (dist < 55) {
                         item.sliced = true;
                         if (item.data.isBomb) {
+                            lives = 0;
+                            document.getElementById('lives').innerText = lives;
                             gameOver();
                         } else {
                             score += 10;
                             document.getElementById('score').innerText = score;
-                            for (let i = 0; i < 18; i++) {
-                                particles.push(new Particle(item.x, item.y));
+                            for (let i = 0; i < 15; i++) {
+                                particles.push(new Particle(item.x, item.y, item.data.color));
                             }
                         }
                     }
@@ -281,7 +338,6 @@
         });
 
         let spawnTimer = 0;
-
         function animate() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -300,9 +356,9 @@
                     if (!item.sliced && item.y > canvas.height + 100) {
                         items.splice(i, 1);
                         if (!item.data.isBomb) {
-                            missed++;
-                            document.getElementById('missed').innerText = missed;
-                            if (missed >= 3) gameOver();
+                            lives--;
+                            document.getElementById('lives').innerText = lives;
+                            if (lives <= 0) gameOver();
                         }
                     } else if (item.sliced) {
                         items.splice(i, 1);
