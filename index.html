@@ -8,7 +8,7 @@
         body {
             margin: 0;
             padding: 0;
-            background: #0b0b0b;
+            background: #050505;
             color: #fff;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             overflow: hidden;
@@ -16,7 +16,7 @@
         }
         #gameCanvas {
             display: block;
-            background: radial-gradient(circle, #1a1a1a 0%, #050505 100%);
+            background: radial-gradient(circle, #1a1a1a 0%, #000000 100%);
             cursor: crosshair;
         }
         #ui {
@@ -27,17 +27,18 @@
             display: flex;
             justify-content: space-between;
             pointer-events: none;
-            font-size: 18px;
-            font-weight: bold;
-            letter-spacing: 1px;
+            font-size: 16px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
             z-index: 5;
         }
         .score-box {
-            background: rgba(255, 255, 255, 0.08);
-            padding: 8px 16px;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(5px);
+            background: rgba(20, 20, 20, 0.7);
+            padding: 8px 14px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
         #startScreen {
             position: absolute;
@@ -48,57 +49,85 @@
             justify-content: center;
             align-items: center;
             z-index: 10;
-            padding: 20px;
+            padding: 24px;
             box-sizing: border-box;
             text-align: center;
         }
+        .logo-tag {
+            font-size: 12px;
+            letter-spacing: 4px;
+            color: #888;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
         h1 {
-            font-size: 32px;
-            margin: 0 0 10px 0;
+            font-size: 34px;
+            margin: 0 0 12px 0;
             letter-spacing: 3px;
-            background: linear-gradient(45deg, #fff, #888);
+            background: linear-gradient(135deg, #ffffff 30%, #555555 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            font-weight: 900;
         }
         .subtitle {
-            color: #aaa;
-            font-size: 14px;
-            margin-bottom: 20px;
-            line-height: 1.4;
+            color: #999;
+            font-size: 13px;
+            margin-bottom: 25px;
+            line-height: 1.5;
+            max-width: 320px;
         }
-        .record-badge {
-            background: rgba(255, 215, 0, 0.1);
-            border: 1px solid rgba(255, 215, 0, 0.3);
-            color: #ffd700;
-            padding: 6px 16px;
-            border-radius: 20px;
+        .rating-box {
+            width: 100%;
+            max-width: 300px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 25px;
+            box-sizing: border-box;
+        }
+        .rating-title {
+            font-size: 11px;
+            letter-spacing: 2px;
+            color: #666;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+        .rating-row {
+            display: flex;
+            justify-content: space-between;
             font-size: 14px;
-            margin-bottom: 30px;
+            padding: 4px 0;
+            color: #ddd;
+        }
+        .rating-row span:last-child {
             font-weight: bold;
+            color: #fff;
         }
         .btn {
-            background: #fff;
-            color: #000;
+            background: #ffffff;
+            color: #000000;
             border: none;
-            padding: 16px 45px;
-            font-size: 16px;
-            font-weight: bold;
+            padding: 16px 40px;
+            font-size: 15px;
+            font-weight: 900;
+            letter-spacing: 1px;
             border-radius: 12px;
             cursor: pointer;
             transition: 0.2s;
-            box-shadow: 0 4px 20px rgba(255,255,255,0.2);
+            box-shadow: 0 6px 25px rgba(255,255,255,0.15);
         }
         .btn:active {
-            transform: scale(0.95);
+            transform: scale(0.96);
         }
         .promo-card {
-            margin-top: 20px;
-            padding: 12px;
+            margin-top: 16px;
+            padding: 10px 14px;
             background: rgba(46, 204, 113, 0.1);
             border: 1px dashed #2ecc71;
             border-radius: 8px;
             color: #2ecc71;
-            font-size: 13px;
+            font-size: 12px;
             display: none;
         }
     </style>
@@ -111,10 +140,18 @@
     </div>
 
     <div id="startScreen">
-        <h1>VELVET ARMOR</h1>
-        <div class="subtitle">Режь оригинальный шмот, обходи паленку.<br>100 очков = 1% скидки (максимум 3%)</div>
-        <div class="record-badge" id="recordText">🏆 Твой рекорд: 0 очков</div>
-        <button class="btn" onclick="startGame()">НАЧАТЬ НАРЕЗКУ</button>
+        <div class="logo-tag">VELVET ARMOR STORE</div>
+        <h1>SLICER</h1>
+        <div class="subtitle">Режь оригинальный шмот, обходи паленку.<br><b>1 000 очков = 1% скидки</b> (макс. 3%)</div>
+        
+        <div class="rating-box">
+            <div class="rating-title">⚡️ ТАБЛИЦА РЕЙТИНГА</div>
+            <div class="rating-row"><span>1. Твой рекорд</span><span id="bestScore">0 очков</span></div>
+            <div class="rating-row"><span>2. Топ недели</span><span>2 400 очков</span></div>
+            <div class="rating-row"><span>3. Легенда ресейла</span><span>4 100 очков</span></div>
+        </div>
+
+        <button class="btn" onclick="startGame()">ИГРАТЬ И РЕЗАТЬ</button>
         <div class="promo-card" id="promoBlock"></div>
     </div>
 
@@ -139,7 +176,7 @@
         let trail = [];
 
         let highscore = localStorage.getItem('va_highscore') || 0;
-        document.getElementById('recordText').innerText = `🏆 Твой рекорд: ${highscore} очков`;
+        document.getElementById('bestScore').innerText = highscore + " очков";
 
         const itemTypes = [
             { name: "Stone Island Tee", color: "#3498db", kind: "tee" },
@@ -158,7 +195,7 @@
                 this.x = Math.random() * (canvas.width - 160) + 80;
                 this.y = canvas.height + 80;
                 this.vx = (Math.random() - 0.5) * 6;
-                this.vy = -(Math.random() * 5 + 13);
+                this.vy = -(Math.random() * 5 + 13.5);
                 this.gravity = 0.35;
                 this.data = itemTypes[Math.floor(Math.random() * itemTypes.length)];
                 this.sliced = false;
@@ -185,7 +222,7 @@
                 if (this.data.kind === "sneaker") {
                     ctx.beginPath();
                     ctx.roundRect(-35, -15, 70, 30, [10, 15, 8, 8]);
-                    ctx.fillStyle = "rgba(20, 20, 20, 0.9)";
+                    ctx.fillStyle = "rgba(15, 15, 15, 0.95)";
                     ctx.fill();
                     ctx.stroke();
                     ctx.fillStyle = this.data.color;
@@ -193,7 +230,7 @@
                 } else if (this.data.kind === "hoodie" || this.data.kind === "zip") {
                     ctx.beginPath();
                     ctx.roundRect(-30, -25, 60, 50, [15, 15, 5, 5]);
-                    ctx.fillStyle = "rgba(20, 20, 20, 0.9)";
+                    ctx.fillStyle = "rgba(15, 15, 15, 0.95)";
                     ctx.fill();
                     ctx.stroke();
                     ctx.beginPath();
@@ -202,7 +239,7 @@
                 } else if (this.data.kind === "jacket") {
                     ctx.beginPath();
                     ctx.roundRect(-32, -28, 64, 52, [8, 8, 4, 4]);
-                    ctx.fillStyle = "rgba(20, 20, 20, 0.9)";
+                    ctx.fillStyle = "rgba(15, 15, 15, 0.95)";
                     ctx.fill();
                     ctx.stroke();
                     ctx.beginPath();
@@ -213,17 +250,17 @@
                     ctx.moveTo(-20, -25); ctx.lineTo(-35, -10); ctx.lineTo(-20, -5);
                     ctx.lineTo(-20, 25); ctx.lineTo(20, 25); ctx.lineTo(20, -5);
                     ctx.lineTo(35, -10); ctx.lineTo(20, -25); ctx.closePath();
-                    ctx.fillStyle = "rgba(20, 20, 20, 0.9)";
+                    ctx.fillStyle = "rgba(15, 15, 15, 0.95)";
                     ctx.fill();
                     ctx.stroke();
                 } else if (this.data.kind === "fake") {
                     ctx.beginPath();
-                    ctx.arc(0, 0, 32, 0, Math.PI * 2);
+                    ctx.arc(0, 0, 34, 0, Math.PI * 2);
                     ctx.fillStyle = "rgba(255, 0, 0, 0.25)";
                     ctx.fill();
                     ctx.lineWidth = 4;
                     ctx.stroke();
-                    ctx.font = 'bold 24px sans-serif';
+                    ctx.font = 'bold 26px sans-serif';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
                     ctx.fillStyle = '#ff0000';
@@ -235,7 +272,7 @@
                     ctx.fillStyle = '#ffffff';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'top';
-                    ctx.fillText(this.data.name, 0, 34);
+                    ctx.fillText(this.data.name, 0, 35);
                 }
 
                 ctx.restore();
@@ -245,12 +282,12 @@
         class Particle {
             constructor(x, y, color) {
                 this.x = x; this.y = y;
-                this.vx = (Math.random() - 0.5) * 12;
-                this.vy = (Math.random() - 0.5) * 12;
+                this.vx = (Math.random() - 0.5) * 14;
+                this.vy = (Math.random() - 0.5) * 14;
                 this.alpha = 1; this.color = color;
                 this.size = Math.random() * 6 + 3;
             }
-            update() { this.x += this.vx; this.y += this.vy; this.alpha -= 0.03; }
+            update() { this.x += this.vx; this.y += this.vy; this.alpha -= 0.025; }
             draw() {
                 ctx.save();
                 ctx.globalAlpha = Math.max(0, this.alpha);
@@ -278,7 +315,7 @@
             if (score > highscore) {
                 highscore = score;
                 localStorage.setItem('va_highscore', highscore);
-                document.getElementById('recordText').innerText = `🏆 Твой рекорд: ${highscore} очков`;
+                document.getElementById('bestScore').innerText = highscore + " очков";
             }
 
             document.getElementById('startScreen').style.display = 'flex';
@@ -287,18 +324,18 @@
             let promoText = `Твой счет: ${score}. `;
             let promoBlock = document.getElementById('promoBlock');
 
-            // Строгая логика: 100 очков = 1%, 200 очков = 2%, от 300 очков = максимум 3%
-            if (score >= 300) {
-                promoText += "🔥 Награда: Максимальная скидка 3% по промокоду <code>VA-SLICER-3</code>";
+            // Новая логика: 1000 = 1%, 2000 = 2%, 3000+ = 3%
+            if (score >= 3000) {
+                promoText += "🔥 Награда: Максимальная скидка 3% по промокоду <code>VA-3PRO</code>";
                 promoBlock.style.display = "block";
-            } else if (score >= 200) {
-                promoText += "⚡️ Награда: Скидка 2% по промокоду <code>VA-SLICER-2</code>";
+            } else if (score >= 2000) {
+                promoText += "⚡️ Награда: Скидка 2% по промокоду <code>VA-2PRO</code>";
                 promoBlock.style.display = "block";
-            } else if (score >= 100) {
-                promoText += "✨ Награда: Скидка 1% по промокоду <code>VA-SLICER-1</code>";
+            } else if (score >= 1000) {
+                promoText += "✨ Награда: Скидка 1% по промокоду <code>VA-1PRO</code>";
                 promoBlock.style.display = "block";
             } else {
-                promoText += "Набери от 100 очков, чтобы выбить скидку на заказ!";
+                promoText += "Набери от 1 000 очков, чтобы выбить скидку на заказ!";
                 promoBlock.style.display = "none";
             }
 
@@ -313,7 +350,7 @@
             items.forEach(item => {
                 if (!item.sliced) {
                     let dist = Math.hypot(item.x - x, item.y - y);
-                    if (dist < 55) {
+                    if (dist < 60) {
                         item.sliced = true;
                         if (item.data.isBomb) {
                             lives = 0;
@@ -322,7 +359,7 @@
                         } else {
                             score += 10;
                             document.getElementById('score').innerText = score;
-                            for (let i = 0; i < 15; i++) {
+                            for (let i = 0; i < 18; i++) {
                                 particles.push(new Particle(item.x, item.y, item.data.color));
                             }
                         }
@@ -343,7 +380,7 @@
 
             if (isPlaying) {
                 spawnTimer++;
-                if (spawnTimer > 45) {
+                if (spawnTimer > 40) {
                     items.push(new Item());
                     spawnTimer = 0;
                 }
@@ -380,8 +417,8 @@
                 for (let i = 1; i < trail.length; i++) {
                     ctx.lineTo(trail[i].x, trail[i].y);
                 }
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
-                ctx.lineWidth = 4;
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.lineWidth = 5;
                 ctx.stroke();
             }
 
