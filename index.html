@@ -3,101 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Velvet Armor — Slicer</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;900&display=swap" rel="stylesheet">
+    <title>Velvet Armor — Block Blast</title>
     <style>
         body {
             margin: 0;
             padding: 0;
-            background: #030303;
-            color: #fff;
-            font-family: 'Montserrat', -apple-system, sans-serif;
-            overflow: hidden;
-            touch-action: none;
-            -webkit-user-select: none;
-            user-select: none;
-        }
-        #gameCanvas {
-            display: block;
             background: #050505;
-            cursor: crosshair;
-        }
-        #ui {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            right: 15px;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            pointer-events: none;
-            z-index: 5;
-            display: none;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            touch-action: none;
         }
-        .ui-top-row {
+        #gameContainer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 400px;
+            height: 100%;
+            max-height: 750px;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+        #header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            width: 100%;
+            font-size: 16px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
         }
         .score-box {
-            background: rgba(18, 18, 18, 0.75);
+            background: rgba(255, 255, 255, 0.05);
             padding: 8px 14px;
-            border-radius: 12px;
+            border-radius: 10px;
             border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(12px);
-            font-size: 14px;
-            font-weight: 700;
-            letter-spacing: 1px;
-            font-variant-numeric: tabular-nums;
         }
-        /* Шкала прогресса скидки сверху */
-        .progress-bar-container {
+        #grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            gap: 4px;
+            background: rgba(20, 20, 20, 0.9);
+            padding: 8px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
             width: 100%;
-            height: 6px;
-            background: rgba(255, 255, 255, 0.1);
+            aspect-ratio: 1;
+            box-sizing: border-box;
+        }
+        .cell {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 4px;
+            transition: background 0.1s;
+        }
+        .cell.filled {
+            background: #2ecc71;
+            box-shadow: inset 0 0 8px rgba(0,0,0,0.3);
+        }
+        .cell.highlight {
+            background: rgba(46, 204, 113, 0.4);
+        }
+        #dock {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            width: 100%;
+            height: 120px;
+            background: rgba(15, 15, 15, 0.8);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .piece-container {
+            width: 90px;
+            height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: grab;
+        }
+        .mini-grid {
+            display: grid;
+            gap: 2px;
+        }
+        .mini-cell {
+            width: 18px;
+            height: 18px;
+            background: #2ecc71;
             border-radius: 3px;
-            overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        .progress-bar-fill {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, #3498db, #2ecc71);
-            transition: width 0.3s ease;
-        }
-        #comboPopup {
-            position: absolute;
-            top: 85px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 18px;
-            font-weight: 900;
-            color: #f1c40f;
-            text-shadow: 0 0 12px rgba(241, 196, 15, 0.6);
-            z-index: 6;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-        #feverPopup {
-            position: absolute;
-            top: 120px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 20px;
-            font-weight: 900;
-            color: #2ecc71;
-            text-shadow: 0 0 15px rgba(46, 204, 113, 0.8);
-            z-index: 6;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.3s;
         }
         .screen {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(4, 4, 4, 0.96);
-            backdrop-filter: blur(20px);
+            background: rgba(5, 5, 5, 0.98);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -106,213 +113,95 @@
             padding: 24px;
             box-sizing: border-box;
             text-align: center;
-            animation: fadeIn 0.3s ease;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.97); }
-            to { opacity: 1; transform: scale(1); }
         }
         .logo-tag {
-            font-size: 10px;
-            letter-spacing: 5px;
-            color: #888;
-            margin-bottom: 8px;
+            font-size: 11px;
+            letter-spacing: 4px;
+            color: #777;
+            margin-bottom: 6px;
             text-transform: uppercase;
-            font-weight: 700;
         }
         h1 {
-            font-size: 28px;
+            font-size: 32px;
             margin: 0 0 8px 0;
-            letter-spacing: 2px;
+            letter-spacing: 3px;
             color: #fff;
             font-weight: 900;
         }
         .subtitle {
             color: #aaa;
-            font-size: 12px;
-            margin-bottom: 24px;
-            line-height: 1.5;
-            max-width: 280px;
+            font-size: 13px;
+            margin-bottom: 20px;
+            line-height: 1.4;
+            max-width: 300px;
         }
         .menu-btn {
             width: 100%;
             max-width: 260px;
-            background: #121212;
+            background: #141414;
             color: #fff;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            padding: 14px 0;
-            font-size: 13px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 13px 0;
+            font-size: 14px;
             font-weight: 700;
             letter-spacing: 1px;
-            border-radius: 14px;
+            border-radius: 12px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: 0.2s;
             margin-bottom: 10px;
-            font-family: 'Montserrat', sans-serif;
-        }
-        .menu-btn:hover {
-            background: #1a1a1a;
-            border-color: rgba(255, 255, 255, 0.3);
         }
         .menu-btn.primary {
             background: #fff;
             color: #000;
             border: none;
-            box-shadow: 0 4px 20px rgba(255,255,255,0.15);
-        }
-        .menu-btn.primary:hover {
-            background: #f0f0f0;
+            box-shadow: 0 4px 20px rgba(255,255,255,0.2);
         }
         .menu-btn.admin {
-            background: #2575fc;
+            background: #3498db;
             color: #fff;
             border: none;
-        }
-        .menu-btn:active {
-            transform: scale(0.96);
-        }
-        .shop-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            width: 100%;
-            max-width: 280px;
-            margin-bottom: 20px;
-            max-height: 240px;
-            overflow-y: auto;
-            padding-right: 4px;
-        }
-        .shop-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 10px 14px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-        .shop-item.selected {
-            border-color: #2ecc71;
-            background: rgba(46, 204, 113, 0.06);
-        }
-        .shop-btn {
-            background: #fff;
-            color: #000;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-weight: 700;
-            cursor: pointer;
-            font-size: 10px;
-            font-family: 'Montserrat', sans-serif;
         }
         .hidden {
             display: none !important;
         }
-        .leaderboard-list {
-            width: 100%;
-            max-width: 280px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 14px;
-            padding: 12px;
-            margin-bottom: 20px;
-            box-sizing: border-box;
-            text-align: left;
-        }
-        .lb-row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-            padding: 6px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.04);
-            color: #bbb;
-        }
-        .lb-row:last-child { border-bottom: none; }
-        .lb-row span:last-child { font-weight: 700; color: #fff; }
         .promo-card {
             margin-top: 12px;
-            padding: 12px 16px;
-            background: rgba(46, 204, 113, 0.08);
+            padding: 10px 14px;
+            background: rgba(46, 204, 113, 0.1);
             border: 1px dashed #2ecc71;
-            border-radius: 12px;
+            border-radius: 8px;
             color: #2ecc71;
             font-size: 12px;
-            font-weight: 600;
         }
     </style>
 </head>
 <body>
 
-    <div id="ui">
-        <div class="ui-top-row">
-            <div class="score-box">СЧЕТ: <span id="score">0</span></div>
-            <div class="score-box">ЖИЗНИ: <span id="lives">3</span> ❤️</div>
-        </div>
-        <div class="progress-bar-container">
-            <div class="progress-bar-fill" id="progressBar"></div>
-        </div>
-    </div>
-    <div id="comboPopup">COMBO x2! 🔥</div>
-    <div id="feverPopup">⭐ BLACK FRIDAY FEVER! ⭐</div>
-
     <!-- ГЛАВНОЕ МЕНЮ -->
     <div id="mainMenu" class="screen">
-        <div class="logo-tag">VELVET ARMOR STORE</div>
-        <h1>SLICER</h1>
-        <div class="subtitle">Премиальная мини-игра. Режь мерч, копи очки и забирай скидки.</div>
-        
+        <div class="logo-tag">VELVET ARMOR</div>
+        <h1>BLOCK BLAST</h1>
+        <div class="subtitle">Собери линии, набей очки и выбей скидку до 3%!</div>
         <button class="menu-btn primary" onclick="startGame()">⚡️ ИГРАТЬ</button>
-        <button class="menu-btn" onclick="showShop()">🛒 АРСЕНАЛ ЛЕЗВИЙ</button>
-        <button class="menu-btn" onclick="showLeaderboard()">🏆 РЕЙТИНГ</button>
         <button class="menu-btn" onclick="showRules()">📜 ПРАВИЛА И СКИДКИ</button>
-    </div>
-
-    <!-- МАГАЗИН ЛЕЗВИЙ -->
-    <div id="shopScreen" class="screen hidden">
-        <div class="logo-tag">КАСТОМИЗАЦИЯ</div>
-        <h1>МАГАЗИН</h1>
-        <div class="subtitle">Рекорд для разблокировки: <span id="shopBestScore">0</span></div>
-        
-        <div class="shop-grid" id="shopList"></div>
-
-        <button class="menu-btn primary" onclick="showMenu()">« НАЗАД В МЕНЮ</button>
-    </div>
-
-    <!-- ТАБЛИЦА ЛИДЕРОВ -->
-    <div id="leaderboardScreen" class="screen hidden">
-        <div class="logo-tag">ТАБЛИЦА ЛИДЕРОВ</div>
-        <h1>РЕЙТИНГ</h1>
-        <div class="leaderboard-list">
-            <div class="lb-row"><span>1. 👑 Твой рекорд</span><span id="lbBest">0 очков</span></div>
-            <div class="lb-row"><span>2. 🥷 darkse11</span><span>3 420 очков</span></div>
-            <div class="lb-row"><span>3. ⚡️ shrede2r</span><span>2 890 очков</span></div>
-            <div class="lb-row"><span>4. 👟 buyer_99</span><span>1 500 очков</span></div>
-        </div>
-        <button class="menu-btn primary" onclick="showMenu()">« НАЗАД В МЕНЮ</button>
     </div>
 
     <!-- ЭКРАН ПРАВИЛ -->
     <div id="rulesScreen" class="screen hidden">
         <div class="logo-tag">ИНФОРМАЦИЯ</div>
         <h1>БОНУСЫ</h1>
-        <div class="subtitle" style="text-align: left; margin-bottom: 22px;">
+        <div class="subtitle" style="text-align: left; margin-bottom: 25px;">
             • <b>1 000 очков</b> = Скидка 1% (VA-1PRO)<br>
             • <b>2 000 очков</b> = Скидка 2% (VA-2PRO)<br>
-            • <b>3 000+ очков</b> = Скидка 3% (макс. 3%, VA-3PRO)<br><br>
-            ⭐ <i>Золотые дропы дают +50 очков!</i><br>
-            ⏱️ <i>Часики замораживают время!</i><br>
-            🔥 <i>Black Friday Fever каждые 500 очков (х3)!</i><br>
-            ❌ <i>Убитая реплика завершает игру!</i>
+            • <b>3 000+ очков</b> = Скидка 3% (VA-3PRO)<br><br>
+            🧩 <i>Перетаскивай фигуры на поле 8х8. Заполняй линии по вертикали или горизонтали, чтобы очищать их и получать очки!</i>
         </div>
         <button class="menu-btn primary" onclick="showMenu()">« НАЗАД В МЕНЮ</button>
     </div>
 
     <!-- ЭКРАН КОНЦА ИГРЫ -->
     <div id="gameOverScreen" class="screen hidden">
-        <h1 id="goTitle">ИГРА ОКОНЧЕНА</h1>
+        <h1>ИГРА ОКОНЧЕНА</h1>
         <div class="subtitle" id="goSubtitle">Твой счет: 0</div>
         <div class="promo-card hidden" id="promoBlock"></div>
         <br>
@@ -321,391 +210,261 @@
         <button class="menu-btn" onclick="showMenu()">В ГЛАВНОЕ МЕНЮ</button>
     </div>
 
-    <canvas id="gameCanvas"></canvas>
+    <!-- ИГРОВОЙ ИНТЕРФЕЙС -->
+    <div id="gameContainer">
+        <div id="header">
+            <div class="score-box">СЧЕТ: <span id="score">0</span></div>
+            <div class="score-box">РЕКОРД: <span id="bestScore">0</span></div>
+        </div>
+        <div id="grid"></div>
+        <div id="dock"></div>
+    </div>
 
     <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-
-        function resize() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        window.addEventListener('resize', resize);
-        resize();
-
+        const GRID_SIZE = 8;
+        let grid = Array(GRID_SIZE).fill(0).map(() => Array(GRID_SIZE).fill(0));
         let score = 0;
-        let lives = 3;
-        let combo = 0;
-        let isPlaying = false;
-        let items = [];
-        let particles = [];
-        let floatTexts = [];
-        let trail = [];
-        let feverMode = false;
-        let feverTimer = 0;
-        let nextFeverScore = 500;
-        let freezeTimer = 0;
-        let gridOffset = 0;
+        let highscore = localStorage.getItem('va_block_highscore') || 0;
+        document.getElementById('bestScore').innerText = highscore;
 
-        let highscore = parseInt(localStorage.getItem('va_highscore') || '0');
-        document.getElementById('lbBest').innerText = highscore + " очков";
-        document.getElementById('shopBestScore').innerText = highscore;
-
-        let skins = [
-            { id: 'classic', name: 'Классический белый', color: 'rgba(255, 255, 255, 0.9)', price: 0, unlocked: true },
-            { id: 'stone', name: 'Stone Island Neon', color: 'rgba(46, 204, 113, 0.95)', price: 300, unlocked: localStorage.getItem('skin_stone') === 'true' },
-            { id: 'gold', name: 'Золотой ресейл', color: 'rgba(241, 196, 15, 0.95)', price: 1000, unlocked: localStorage.getItem('skin_gold') === 'true' },
-            { id: 'fire', name: 'Огненный Archive', color: 'rgba(231, 76, 60, 0.95)', price: 2000, unlocked: localStorage.getItem('skin_fire') === 'true' }
+        const SHAPES = [
+            [[1]], // точка
+            [[1, 1]], // линия 2
+            [[1, 1, 1]], // линия 3
+            [[1, 1], [1, 1]], // квадрат 2x2
+            [[1, 0], [1, 1]], // уголок
+            [[1, 1, 1], [0, 1, 0]], // T-шка
         ];
-        skins[0].unlocked = true;
 
-        let currentSkinId = localStorage.getItem('va_current_skin') || 'classic';
-
-        function getActiveSkinColor() {
-            let s = skins.find(x => x.id === currentSkinId);
-            return s ? s.color : 'rgba(255, 255, 255, 0.9)';
-        }
-
-        function renderShop() {
-            let list = document.getElementById('shopList');
-            list.innerHTML = '';
-            document.getElementById('shopBestScore').innerText = highscore;
-
-            skins.forEach(skin => {
-                let isSelected = skin.id === currentSkinId;
-                let div = document.createElement('div');
-                div.className = `shop-item ${isSelected ? 'selected' : ''}`;
-                
-                let btnHtml = '';
-                if (isSelected) {
-                    btnHtml = `<span style="color:#2ecc71; font-weight:700; font-size:10px;">АКТИВНО</span>`;
-                } else if (skin.unlocked) {
-                    btnHtml = `<button class="shop-btn" onclick="selectSkin('${skin.id}')">ВЫБРАТЬ</button>`;
-                } else if (highscore >= skin.price) {
-                    btnHtml = `<button class="shop-btn" style="background:#2ecc71; color:#fff;" onclick="buySkin('${skin.id}')">КУПИТЬ</button>`;
-                } else {
-                    btnHtml = `<span style="color:#666; font-size:10px;">🔒 От ${skin.price}</span>`;
-                }
-
-                div.innerHTML = `<span>${skin.name}</span>${btnHtml}`;
-                list.appendChild(div);
-            });
-        }
-
-        function selectSkin(id) {
-            currentSkinId = id;
-            localStorage.setItem('va_current_skin', id);
-            renderShop();
-        }
-
-        function buySkin(id) {
-            let skin = skins.find(s => s.id === id);
-            if (skin && highscore >= skin.price) {
-                skin.unlocked = true;
-                localStorage.setItem(`skin_${id}`, 'true');
-                selectSkin(id);
-            }
-        }
-
-        let audioCtx = null;
-        let bgmInterval = null;
-
-        function initAudio() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-            startBGM();
-        }
-
-        function startBGM() {
-            if (bgmInterval) return;
-            let notes = [220, 247.05, 261.63, 293.66, 329.63, 349.23, 392.00];
-            let bassNotes = [110, 130.81, 146.83, 98.00];
-            let step = 0;
-
-            bgmInterval = setInterval(() => {
-                if (!isPlaying || !audioCtx) return;
-                try {
-                    let osc = audioCtx.createOscillator();
-                    let gain = audioCtx.createGain();
-                    osc.type = 'triangle';
-                    osc.connect(gain);
-                    gain.connect(audioCtx.destination);
-
-                    let freq = notes[step % notes.length];
-                    if (step % 4 === 0) freq = bassNotes[(step / 4) % bassNotes.length];
-
-                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-                    gain.gain.setValueAtTime(0.03, audioCtx.currentTime);
-                    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2);
-                    osc.start(); osc.stop(audioCtx.currentTime + 0.2);
-                    step++;
-                } catch(e) {}
-            }, 300);
-        }
-
-        function playSound(type) {
-            try {
-                initAudio();
-                if (!audioCtx) return;
-                let osc = audioCtx.createOscillator();
-                let gain = audioCtx.createGain();
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-
-                if (type === 'slice') {
-                    osc.frequency.setValueAtTime(350, audioCtx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(850, audioCtx.currentTime + 0.08);
-                    gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
-                    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.08);
-                    osc.start(); osc.stop(audioCtx.currentTime + 0.08);
-                } else if (type === 'gold') {
-                    osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.2);
-                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2);
-                    osc.start(); osc.stop(audioCtx.currentTime + 0.2);
-                } else if (type === 'freeze') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.3);
-                    gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
-                    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
-                    osc.start(); osc.stop(audioCtx.currentTime + 0.3);
-                } else if (type === 'fake') {
-                    osc.type = 'sawtooth';
-                    osc.frequency.setValueAtTime(140, audioCtx.currentTime);
-                    osc.frequency.linearRampToValueAtTime(40, audioCtx.currentTime + 0.3);
-                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
-                    osc.start(); osc.stop(audioCtx.currentTime + 0.3);
-                }
-            } catch(e) {}
-        }
+        let currentPieces = [null, null, null];
 
         function showMenu() {
-            isPlaying = false;
             document.getElementById('mainMenu').classList.remove('hidden');
-            document.getElementById('shopScreen').classList.add('hidden');
-            document.getElementById('leaderboardScreen').classList.add('hidden');
             document.getElementById('rulesScreen').classList.add('hidden');
             document.getElementById('gameOverScreen').classList.add('hidden');
-            document.getElementById('ui').style.display = 'none';
-        }
-
-        function showShop() {
-            renderShop();
-            document.getElementById('mainMenu').classList.add('hidden');
-            document.getElementById('shopScreen').classList.remove('hidden');
-        }
-
-        function showLeaderboard() {
-            document.getElementById('mainMenu').classList.add('hidden');
-            document.getElementById('leaderboardScreen').classList.remove('hidden');
         }
 
         function showRules() {
             document.getElementById('mainMenu').classList.add('hidden');
-            document.getElementById('rulesScreen').classList.add('hidden');
+            document.getElementById('rulesScreen').classList.remove('hidden');
         }
 
         function contactAdmin() {
             window.location.href = "https://t.me/darkse11";
         }
 
-        const rawItems = [
-            { file: "IMG_B6DA3E141F57-1.jpeg", isGold: false, isFreeze: false, isBomb: false },
-            { file: "IMG_B6DA3E141F57-2.jpeg", isGold: false, isFreeze: false, isBomb: false },
-            { file: "IMG_B6DA3E141F57-3.jpeg", isGold: false, isFreeze: false, isBomb: false },
-            { file: "IMG_B6DA3E141F57-4.jpeg", isGold: false, isFreeze: false, isBomb: false },
-            { file: "IMG_B6DA3E141F57-5.jpeg", isGold: false, isFreeze: false, isBomb: false },
-            { file: "IMG_B6DA3E141F57-6.jpeg", isGold: false, isFreeze: false, isBomb: false },
-            { file: "IMG_B6DA3E141F57-7.jpeg", isGold: false, isFreeze: false, isBomb: false },
-            { file: "IMG_B6DA3E141F57-8.jpeg", isGold: false, isFreeze: false, isBomb: false },
-            { file: "IMG_B6DA3E141F57-9.jpeg", isGold: true,  isFreeze: false, isBomb: false },
-            { file: "IMG_B6DA3E141F57-10.jpeg", isGold: false, isFreeze: true,  isBomb: false }
-        ];
+        function startGame() {
+            grid = Array(GRID_SIZE).fill(0).map(() => Array(GRID_SIZE).fill(0));
+            score = 0;
+            document.getElementById('score').innerText = score;
+            document.getElementById('mainMenu').classList.add('hidden');
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            renderGrid();
+            spawnPieces();
+        }
 
-        const loadedItems = rawItems.map(item => {
-            const img = new Image();
-            img.src = item.file;
-            return { ...item, img: img };
-        });
-
-        class Item {
-            constructor() {
-                this.x = Math.random() * (canvas.width - 160) + 80;
-                this.y = canvas.height + 80;
-                let speedMult = 1 + (score / 1500);
-                this.vx = (Math.random() - 0.5) * 6;
-                this.vy = -(Math.random() * 5 + 13.5) * Math.min(speedMult, 1.4);
-                this.gravity = 0.35;
-                this.size = 85;
-                
-                let rand = Math.random();
-                if (feverMode) {
-                    let cleanItems = loadedItems.filter(i => !i.isBomb);
-                    this.data = cleanItems[Math.floor(Math.random() * cleanItems.length)];
-                } else if (rand < 0.08) {
-                    this.data = loadedItems.find(i => i.isGold);
-                } else if (rand < 0.15) {
-                    this.data = loadedItems.find(i => i.isFreeze);
-                } else if (rand < 0.3) {
-                    this.data = { isBomb: true };
-                } else {
-                    let normalItems = loadedItems.filter(i => !i.isGold && !i.isFreeze);
-                    this.data = normalItems[Math.floor(Math.random() * normalItems.length)];
+        function renderGrid() {
+            const gridEl = document.getElementById('grid');
+            gridEl.innerHTML = '';
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    if (grid[r][c] === 1) {
+                        cell.classList.add('filled');
+                    }
+                    gridEl.appendChild(cell);
                 }
-
-                this.sliced = false;
-                this.angle = 0;
-                this.vAngle = (Math.random() - 0.5) * 0.08;
             }
+        }
 
-            update() {
-                let m = freezeTimer > 0 ? 0.4 : 1;
-                this.x += this.vx * m;
-                this.y += this.vy * m;
-                this.vy += this.gravity * m;
-                this.angle += this.vAngle * m;
-            }
+        function spawnPieces() {
+            const dock = document.getElementById('dock');
+            dock.innerHTML = '';
+            currentPieces = [];
 
-            draw() {
-                ctx.save();
-                ctx.translate(this.x, this.y);
-                ctx.rotate(this.angle);
+            for (let i = 0; i < 3; i++) {
+                const shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+                currentPieces.push(shape);
 
-                if (this.data.isBomb) {
-                    ctx.beginPath();
-                    ctx.arc(0, 0, 38, 0, Math.PI * 2);
-                    ctx.fillStyle = "rgba(255, 0, 0, 0.25)";
-                    ctx.fill();
-                    ctx.lineWidth = 4;
-                    ctx.strokeStyle = "#ff0000";
-                    ctx.stroke();
+                const container = document.createElement('div');
+                container.className = 'piece-container';
+                container.dataset.index = i;
 
-                    ctx.font = 'bold 28px sans-serif';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText("❌", 0, 0);
-                } else {
-                    ctx.beginPath();
-                    ctx.arc(0, 0, this.size / 2 + 4, 0, Math.PI * 2);
-                    ctx.fillStyle = "rgba(18, 18, 18, 0.9)";
-                    ctx.fill();
-                    ctx.lineWidth = 2;
-                    ctx.strokeStyle = this.data.isGold ? "#ffd700" : (this.data.isFreeze ? "#3498db" : "rgba(255, 255, 255, 0.15)");
-                    ctx.stroke();
+                const miniGrid = document.createElement('div');
+                miniGrid.className = 'mini-grid';
+                const rows = shape.length;
+                const cols = shape[0].length;
+                miniGrid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
 
-                    ctx.save();
-                    ctx.beginPath();
-                    ctx.arc(0, 0, this.size / 2, 0, Math.PI * 2);
-                    ctx.clip();
-
-                    try {
-                        ctx.drawImage(this.data.img, -this.size / 2, -this.size / 2, this.size, this.size);
-                    } catch(e) {}
-                    ctx.restore();
-
-                    if (this.data.isFreeze) {
-                        ctx.font = 'bold 18px sans-serif';
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-                        ctx.fillStyle = '#3498db';
-                        ctx.fillText("⏱️", 0, 0);
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        const mCell = document.createElement('div');
+                        if (shape[r][c] === 1) {
+                            mCell.className = 'mini-cell';
+                        } else {
+                            mCell.style.background = 'transparent';
+                        }
+                        miniGrid.appendChild(mCell);
                     }
                 }
 
-                ctx.restore();
+                container.appendChild(miniGrid);
+                initDragAndDrop(container, i);
+                dock.appendChild(container);
             }
+
+            checkGameOver();
         }
 
-        class FloatingText {
-            constructor(x, y, text, color) {
-                this.x = x; this.y = y;
-                this.text = text; this.color = color;
-                this.alpha = 1; this.vy = -2;
-            }
-            update() { this.y += this.vy; this.alpha -= 0.035; }
-            draw() {
-                ctx.save();
-                ctx.globalAlpha = Math.max(0, this.alpha);
-                ctx.font = 'bold 16px Montserrat, sans-serif';
-                ctx.fillStyle = this.color;
-                ctx.textAlign = 'center';
-                ctx.fillText(this.text, this.x, this.y);
-                ctx.restore();
-            }
+        function initDragAndDrop(element, pieceIndex) {
+            let startX, startY;
+
+            element.addEventListener('pointerdown', (e) => {
+                if (!currentPieces[pieceIndex]) return;
+                startX = e.clientX;
+                startY = e.clientY;
+                element.style.opacity = '0.5';
+
+                function onPointerMove(e) {
+                    // Простое отслеживание перемещения для мобильных и ПК
+                }
+
+                function onPointerUp(e) {
+                    element.style.opacity = '1';
+                    window.removeEventListener('pointermove', onPointerMove);
+                    window.removeEventListener('pointerup', onPointerUp);
+
+                    // Проверяем, куда бросили (упрощенная логика по клику/тапу в центр поля или падению)
+                    tryPlacePiece(pieceIndex);
+                }
+
+                window.addEventListener('pointermove', onPointerMove);
+                window.addEventListener('pointerup', onPointerUp);
+            });
         }
 
-        class Particle {
-            constructor(x, y, color) {
-                this.x = x; this.y = y;
-                this.vx = (Math.random() - 0.5) * 14;
-                this.vy = (Math.random() - 0.5) * 14;
-                this.alpha = 1; this.color = color;
-                this.size = Math.random() * 5 + 2;
-            }
-            update() { this.x += this.vx; this.y += this.vy; this.alpha -= 0.025; }
-            draw() {
-                ctx.save();
-                ctx.globalAlpha = Math.max(0, this.alpha);
-                ctx.fillStyle = this.color;
-                ctx.fillRect(this.x, this.y, this.size, this.size);
-                ctx.restore();
-            }
+        // Упрощенная надежная интерактивная логика для мини-апп: клик по фигуре, затем клик по полю
+        let selectedPieceIndex = null;
+
+        function initDragAndDrop(element, pieceIndex) {
+            element.addEventListener('click', () => {
+                document.querySelectorAll('.piece-container').forEach(el => el.style.border = 'none');
+                selectedPieceIndex = pieceIndex;
+                element.style.border = '2px solid #2ecc71';
+                element.style.borderRadius = '8px';
+            });
         }
 
-        function startGame() {
-            initAudio();
-            score = 0;
-            lives = 3;
-            combo = 0;
-            items = [];
-            particles = [];
-            floatTexts = [];
-            feverMode = false;
-            freezeTimer = 0;
-            nextFeverScore = 500;
-            isPlaying = true;
+        document.getElementById('grid').addEventListener('click', (e) => {
+            if (selectedPieceIndex === null || !currentPieces[selectedPieceIndex]) return;
+
+            const gridRect = document.getElementById('grid').getBoundingClientRect();
+            const cellSize = gridRect.width / GRID_SIZE;
+            const x = Math.floor((e.clientX - gridRect.left) / cellSize);
+            const y = Math.floor((e.clientY - gridRect.top) / cellSize);
+
+            if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
+                if (canPlace(currentPieces[selectedPieceIndex], y, x)) {
+                    placePiece(currentPieces[selectedPieceIndex], y, x);
+                    currentPieces[selectedPieceIndex] = null;
+                    document.querySelectorAll('.piece-container')[selectedPieceIndex].innerHTML = '';
+                    selectedPieceIndex = null;
+
+                    checkLines();
+                    renderGrid();
+
+                    if (currentPieces.every(p => p === null)) {
+                        spawnPieces();
+                    } else {
+                        checkGameOver();
+                    }
+                }
+            }
+        });
+
+        function canPlace(shape, startR, startC) {
+            const rows = shape.length;
+            const cols = shape[0].length;
+            if (startR + rows > GRID_SIZE || startC + cols > GRID_SIZE) return false;
+
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    if (shape[r][c] === 1 && grid[startR + r][startC + c] === 1) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function placePiece(shape, startR, startC) {
+            const rows = shape.length;
+            const cols = shape[0].length;
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    if (shape[r][c] === 1) {
+                        grid[startR + r][startC + c] = 1;
+                        score += 10;
+                    }
+                }
+            }
             document.getElementById('score').innerText = score;
-            document.getElementById('lives').innerText = lives;
-            updateProgressBar();
-            
-            document.getElementById('mainMenu').classList.add('hidden');
-            document.getElementById('gameOverScreen').classList.add('hidden');
-            document.getElementById('ui').style.display = 'flex';
         }
 
-        function updateProgressBar() {
-            // Прогресс до 3000 очков (макс скидка)
-            let percent = Math.min(100, (score / 3000) * 100);
-            document.getElementById('progressBar').style.width = percent + '%';
+        function checkLines() {
+            let fullRows = [];
+            let fullCols = [];
+
+            for (let r = 0; r < GRID_SIZE; r++) {
+                if (grid[r].every(cell => cell === 1)) fullRows.push(r);
+            }
+            for (let c = 0; c < GRID_SIZE; c++) {
+                let colFull = true;
+                for (let r = 0; r < GRID_SIZE; r++) {
+                    if (grid[r][c] === 0) colFull = false;
+                }
+                if (colFull) fullCols.push(c);
+            }
+
+            fullRows.forEach(r => {
+                for (let c = 0; c < GRID_SIZE; c++) grid[r][c] = 0;
+                score += 100;
+            });
+            fullCols.forEach(c => {
+                for (let r = 0; r < GRID_SIZE; r++) grid[r][c] = 0;
+                score += 100;
+            });
+
+            if (fullRows.length > 0 || fullCols.length > 0) {
+                document.getElementById('score').innerText = score;
+            }
         }
 
-        function triggerPopup(elementId) {
-            let el = document.getElementById(elementId);
-            el.style.opacity = '1';
-            setTimeout(() => { el.style.opacity = '0'; }, 700);
+        function checkGameOver() {
+            let possibleMoves = false;
+            currentPieces.forEach(piece => {
+                if (!piece) return;
+                for (let r = 0; r < GRID_SIZE; r++) {
+                    for (let c = 0; c < GRID_SIZE; c++) {
+                        if (canPlace(piece, r, c)) possibleMoves = true;
+                    }
+                }
+            });
+
+            if (!possibleMoves && currentPieces.some(p => p !== null)) {
+                gameOver();
+            }
         }
 
         function gameOver() {
-            isPlaying = false;
-            document.getElementById('ui').style.display = 'none';
-            playSound('fake');
-            
             if (score > highscore) {
                 highscore = score;
-                localStorage.setItem('va_highscore', highscore);
-                document.getElementById('lbBest').innerText = highscore + " очков";
+                localStorage.setItem('va_block_highscore', highscore);
+                document.getElementById('bestScore').innerText = highscore;
             }
 
             document.getElementById('gameOverScreen').classList.remove('hidden');
-            
             let promoText = `Твой итоговый счет: ${score}. `;
             let promoBlock = document.getElementById('promoBlock');
 
@@ -729,152 +488,8 @@
             document.getElementById('goSubtitle').innerText = promoText;
         }
 
-        function addTouch(x, y) {
-            trail.push({ x, y, time: Date.now() });
-            if (!isPlaying) return;
-
-            items.forEach(item => {
-                if (!item.sliced) {
-                    let dist = Math.hypot(item.x - x, item.y - y);
-                    if (dist < 60) {
-                        item.sliced = true;
-                        if (item.data.isBomb) {
-                            lives = 0;
-                            document.getElementById('lives').innerText = lives;
-                            gameOver();
-                        } else if (item.data.isGold) {
-                            playSound('gold');
-                            let mult = feverMode ? 3 : 1;
-                            score += 50 * mult;
-                            document.getElementById('score').innerText = score;
-                            updateProgressBar();
-                            floatTexts.push(new FloatingText(item.x, item.y, `+${50*mult} GOLD!`, "#ffd700"));
-                            for (let i = 0; i < 20; i++) {
-                                particles.push(new Particle(item.x, item.y, "#ffd700"));
-                            }
-                        } else if (item.data.isFreeze) {
-                            playSound('freeze');
-                            freezeTimer = 180;
-                            floatTexts.push(new FloatingText(item.x, item.y, "⏱️ FREEZE!", "#3498db"));
-                            for (let i = 0; i < 15; i++) {
-                                particles.push(new Particle(item.x, item.y, "#3498db"));
-                            }
-                        } else {
-                            playSound('slice');
-                            combo++;
-                            let points = feverMode ? 30 : 10;
-                            let txt = feverMode ? "+30 FEVER" : "+10";
-                            if (combo >= 3 && !feverMode) {
-                                points = 20;
-                                txt = "+20 COMBO";
-                                triggerPopup('comboPopup');
-                            }
-                            score += points;
-                            document.getElementById('score').innerText = score;
-                            updateProgressBar();
-                            floatTexts.push(new FloatingText(item.x, item.y, txt, "#ffffff"));
-                            
-                            for (let i = 0; i < 10; i++) {
-                                particles.push(new Particle(item.x, item.y, "#ffffff"));
-                            }
-
-                            if (score >= nextFeverScore && !feverMode) {
-                                feverMode = true;
-                                feverTimer = 250;
-                                triggerPopup('feverPopup');
-                                nextFeverScore += 500;
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        window.addEventListener('mousemove', e => addTouch(e.clientX, e.clientY));
-        window.addEventListener('touchmove', e => {
-            let touch = e.touches[0];
-            addTouch(touch.clientX, touch.clientY);
-        });
-
-        let spawnTimer = 0;
-        function animate() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Киберпанк-сетка на фоне
-            gridOffset = (gridOffset + (freezeTimer > 0 ? 0.5 : 1.5)) % 40;
-            ctx.strokeStyle = feverMode ? "rgba(46, 204, 113, 0.06)" : "rgba(255, 255, 255, 0.025)";
-            ctx.lineWidth = 1;
-            for (let x = 0; x < canvas.width; x += 40) {
-                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
-            }
-            for (let y = gridOffset; y < canvas.height; y += 40) {
-                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
-            }
-
-            if (isPlaying) {
-                if (feverMode) {
-                    feverTimer--;
-                    if (feverTimer <= 0) feverMode = false;
-                }
-                if (freezeTimer > 0) {
-                    freezeTimer--;
-                }
-
-                spawnTimer++;
-                let spawnInterval = feverMode ? 22 : 36;
-                if (spawnTimer > spawnInterval) {
-                    items.push(new Item());
-                    spawnTimer = 0;
-                }
-
-                for (let i = items.length - 1; i >= 0; i--) {
-                    let item = items[i];
-                    item.update();
-                    item.draw();
-
-                    if (!item.sliced && item.y > canvas.height + 100) {
-                        items.splice(i, 1);
-                        if (!item.data.isBomb && !item.data.isFreeze) {
-                            combo = 0;
-                            lives--;
-                            document.getElementById('lives').innerText = lives;
-                            if (lives <= 0) gameOver();
-                        }
-                    } else if (item.sliced) {
-                        items.splice(i, 1);
-                    }
-                }
-            }
-
-            for (let i = particles.length - 1; i >= 0; i--) {
-                particles[i].update();
-                particles[i].draw();
-                if (particles[i].alpha <= 0) particles.splice(i, 1);
-            }
-
-            for (let i = floatTexts.length - 1; i >= 0; i--) {
-                floatTexts[i].update();
-                floatTexts[i].draw();
-                if (floatTexts[i].alpha <= 0) floatTexts.splice(i, 1);
-            }
-
-            let now = Date.now();
-            trail = trail.filter(p => now - p.time < 150);
-            if (trail.length > 1) {
-                ctx.beginPath();
-                ctx.moveTo(trail[0].x, trail[0].y);
-                for (let i = 1; i < trail.length; i++) {
-                    ctx.lineTo(trail[i].x, trail[i].y);
-                }
-                ctx.strokeStyle = getActiveSkinColor();
-                ctx.lineWidth = 4;
-                ctx.stroke();
-            }
-
-            requestAnimationFrame(animate);
-        }
-
-        animate();
+        // Автозапуск генерации первой партии
+        spawnPieces();
     </script>
 </body>
 </html>
