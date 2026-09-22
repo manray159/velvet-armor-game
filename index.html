@@ -2,712 +2,701 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Velvet Armor — Drop & Stack</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Velvet Armor — Slicer</title>
     <style>
-        html, body {
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
             width: 100%;
-            height: 100%;
+            height: 100vh;
+            overflow: hidden;
+            touch-action: none;
             background: #030303;
             color: #fff;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            overflow: hidden;
-            position: fixed;
-            touch-action: none;
-            -webkit-user-select: none;
-            user-select: none;
+            -webkit-font-smoothing: antialiased;
         }
+
+        /* ===== CANVAS ===== */
         #gameCanvas {
             display: block;
-            background: #050505;
+            background: linear-gradient(135deg, #030303 0%, #0a0a0a 100%);
+            cursor: crosshair;
             width: 100%;
             height: 100%;
         }
+
+        /* ===== UI ELEMENTS ===== */
         #ui {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            right: 20px;
-            display: flex;
-            justify-content: space-between;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             pointer-events: none;
-            font-size: 16px;
-            font-weight: 800;
-            letter-spacing: 1.5px;
             z-index: 5;
+            padding: max(12px, env(safe-area-inset-top)) 20px max(12px, env(safe-area-inset-bottom)) 20px;
             display: none;
         }
-        .score-box {
-            background: rgba(20, 20, 20, 0.85);
-            padding: 8px 14px;
-            border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(10px);
-        }
-        #comboPopup {
+
+        .ui-top {
             position: absolute;
-            top: 120px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 24px;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: max(12px, env(safe-area-inset-top)) 20px 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .score-box {
+            background: rgba(15, 15, 15, 0.6);
+            backdrop-filter: blur(12px);
+            padding: 10px 16px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: #fff;
+            text-transform: uppercase;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .score-value {
+            color: #00ff88;
             font-weight: 900;
-            color: #f1c40f;
-            text-shadow: 0 0 15px rgba(241, 196, 15, 0.8);
+            font-size: 16px;
+            margin-left: 6px;
+        }
+
+        .lives-icon {
+            font-size: 16px;
+            margin-left: 4px;
+            display: inline-block;
+            animation: heartbeat 0.6s ease-in-out infinite;
+        }
+
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+
+        .popup {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 28px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            text-transform: uppercase;
             z-index: 6;
             pointer-events: none;
             opacity: 0;
-            transition: opacity 0.2s;
         }
+
+        .popup.combo {
+            color: #00ff88;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.8), 0 0 40px rgba(0, 255, 136, 0.4);
+            animation: popupCombo 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        .popup.fever {
+            color: #ffd700;
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.9), 0 0 60px rgba(255, 215, 0, 0.5);
+            animation: popupFever 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        @keyframes popupCombo {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3) rotateZ(-15deg); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2) rotateZ(5deg); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(1) rotateZ(0deg) translateY(-40px); }
+        }
+
+        @keyframes popupFever {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.2) rotateZ(-20deg); }
+            40% { opacity: 1; transform: translate(-50%, -50%) scale(1.3) rotateZ(8deg); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(1) rotateZ(0deg) translateY(-60px); }
+        }
+
+        /* ===== SCREEN STYLES ===== */
         .screen {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(4, 4, 4, 0.98);
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(3, 3, 3, 0.98);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             z-index: 10;
-            padding: 24px;
+            padding: max(24px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom)) 24px;
             box-sizing: border-box;
             text-align: center;
+            backdrop-filter: blur(8px);
+            overflow-y: auto;
         }
+
+        .screen.hidden {
+            display: none !important;
+        }
+
+        .screen-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 400px;
+        }
+
         .logo-tag {
-            font-size: 11px;
-            letter-spacing: 4px;
-            color: #777;
-            margin-bottom: 6px;
+            font-size: 10px;
+            letter-spacing: 3px;
+            color: rgba(255, 255, 255, 0.4);
+            margin-bottom: 12px;
             text-transform: uppercase;
+            font-weight: 600;
         }
+
         h1 {
-            font-size: 30px;
-            margin: 0 0 8px 0;
+            font-size: clamp(28px, 8vw, 40px);
+            margin: 0 0 12px 0;
             letter-spacing: 3px;
             color: #fff;
             font-weight: 900;
+            text-transform: uppercase;
         }
+
         .subtitle {
-            color: #999;
+            color: rgba(255, 255, 255, 0.6);
             font-size: 13px;
-            margin-bottom: 20px;
-            line-height: 1.4;
-            max-width: 300px;
+            margin-bottom: 28px;
+            line-height: 1.6;
+            max-width: 320px;
         }
+
         .menu-btn {
             width: 100%;
-            max-width: 260px;
-            background: #141414;
+            max-width: 300px;
+            background: rgba(20, 20, 20, 0.5);
+            backdrop-filter: blur(10px);
             color: #fff;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 13px 0;
-            font-size: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 14px 0;
+            font-size: 13px;
             font-weight: 700;
             letter-spacing: 1px;
             border-radius: 12px;
             cursor: pointer;
-            transition: 0.2s;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
             margin-bottom: 10px;
+            text-transform: uppercase;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
         }
+
         .menu-btn.primary {
-            background: #fff;
+            background: linear-gradient(135deg, #00ff88 0%, #00dd77 100%);
             color: #000;
-            border: none;
-            box-shadow: 0 4px 20px rgba(255,255,255,0.2);
+            border: 1px solid #00ff88;
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.4), 0 8px 32px rgba(0, 0, 0, 0.3);
         }
+
         .menu-btn.admin {
-            background: #3498db;
-            color: #fff;
-            border: none;
+            background: rgba(52, 152, 219, 0.2);
+            color: #3498db;
+            border: 1px solid rgba(52, 152, 219, 0.4);
         }
+
         .menu-btn:active {
-            transform: scale(0.96);
+            transform: scale(0.95);
         }
+
         .shop-grid {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
             width: 100%;
-            max-width: 280px;
-            margin-bottom: 20px;
-            max-height: 250px;
+            max-width: 320px;
+            margin-bottom: 24px;
+            max-height: 300px;
             overflow-y: auto;
+            padding: 0 4px;
         }
+
         .shop-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
             background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 10px 14px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 12px 14px;
             border-radius: 10px;
-            font-size: 13px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
         }
+
         .shop-item.selected {
-            border-color: #2ecc71;
-            background: rgba(46, 204, 113, 0.08);
+            border-color: #00ff88;
+            background: rgba(0, 255, 136, 0.1);
         }
+
         .shop-btn {
-            background: #fff;
+            background: #00ff88;
             color: #000;
             border: none;
             padding: 6px 12px;
             border-radius: 6px;
-            font-weight: bold;
+            font-weight: 700;
             cursor: pointer;
             font-size: 11px;
         }
-        .hidden {
-            display: none !important;
-        }
+
         .leaderboard-list {
             width: 100%;
-            max-width: 280px;
+            max-width: 320px;
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 12px;
-            padding: 12px;
-            margin-bottom: 20px;
+            padding: 16px;
+            margin-bottom: 24px;
             box-sizing: border-box;
             text-align: left;
         }
+
         .lb-row {
             display: flex;
             justify-content: space-between;
-            font-size: 13px;
-            padding: 5px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            color: #ccc;
-        }
-        .lb-row:last-child { border-bottom: none; }
-        .lb-row span:last-child { font-weight: bold; color: #fff; }
-        .promo-card {
-            margin-top: 12px;
-            padding: 10px 14px;
-            background: rgba(46, 204, 113, 0.1);
-            border: 1px dashed #2ecc71;
-            border-radius: 8px;
-            color: #2ecc71;
             font-size: 12px;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .lb-row:last-child { border-bottom: none; }
+        .lb-row span:last-child { font-weight: 700; color: #00ff88; }
+
+        .promo-card {
+            margin-top: 16px;
+            padding: 14px;
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px dashed rgba(0, 255, 136, 0.3);
+            border-radius: 10px;
+            color: #00ff88;
+            font-size: 12px;
+        }
+
+        .promo-code {
+            font-family: monospace;
+            font-weight: 700;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-top: 4px;
+            display: inline-block;
         }
     </style>
 </head>
 <body>
 
-    <!-- Жесткая блокировка скролла -->
-    <script>
-        document.addEventListener('touchmove', function(e) {
-            e.preventDefault();
-        }, { passive: false });
-    </script>
+    <canvas id="gameCanvas"></canvas>
 
     <div id="ui">
-        <div class="score-box">БАШНЯ: <span id="score">0</span></div>
-        <div class="score-box">ЖИЗНИ: <span id="lives">3</span> ❤️</div>
+        <div class="ui-top">
+            <div class="score-box">СЧЕТ: <span class="score-value" id="score">0</span></div>
+            <div class="score-box">ЖИЗНИ: <span class="score-value" id="lives">3</span><span class="lives-icon">❤️</span></div>
+        </div>
+        <div class="popup combo" id="comboPopup">COMBO x2! 🔥</div>
+        <div class="popup fever" id="feverPopup">⭐ BLACK FRIDAY ⭐</div>
     </div>
-    <div id="comboPopup">PERFECT DROP! 🔥</div>
 
-    <!-- ГЛАВНОЕ МЕНЮ -->
+    <!-- МЕНЮ -->
     <div id="mainMenu" class="screen">
-        <div class="logo-tag">VELVET ARMOR STORE</div>
-        <h1>BOX DROP</h1>
-        <div class="subtitle">Построй самую высокую башню из коробок со шмотом!</div>
-        
-        <button class="menu-btn primary" onclick="startGame()">⚡️ ИГРАТЬ</button>
-        <button class="menu-btn" onclick="showShop()">🛒 СТИЛЬ КРАНА</button>
-        <button class="menu-btn" onclick="showLeaderboard()">🏆 ТАБЛИЦА ЛИДЕРОВ</button>
-        <button class="menu-btn" onclick="showRules()">📜 ПРАВИЛА И СКИДКИ</button>
+        <div class="screen-content">
+            <div class="logo-tag">⚡ Velvet Armor Store</div>
+            <h1>SLICER</h1>
+            <div class="subtitle">Киберпанк-аркада с твоим шмотом</div>
+            <button class="menu-btn primary" onclick="startGame()">⚡️ ИГРАТЬ</button>
+            <button class="menu-btn" onclick="showShop()">🛒 МАГАЗИН ЛЕЗВИЙ</button>
+            <button class="menu-btn" onclick="showLeaderboard()">🏆 ТАБЛИЦА ЛИДЕРОВ</button>
+            <button class="menu-btn" onclick="showRules()">📜 ПРАВИЛА И СКИДКИ</button>
+        </div>
     </div>
 
     <!-- МАГАЗИН -->
     <div id="shopScreen" class="screen hidden">
-        <div class="logo-tag">СТИЛИЗАЦИЯ</div>
-        <h1>НЕОН</h1>
-        <div class="subtitle">Рекорд для разблокировки: <span id="shopBestScore">0</span></div>
-        
-        <div class="shop-grid" id="shopList"></div>
-        <button class="menu-btn primary" onclick="showMenu()">« НАЗАД В МЕНЮ</button>
+        <div class="screen-content">
+            <div class="logo-tag">⚔️ АРСЕНАЛ</div>
+            <h1>МАГАЗИН</h1>
+            <div class="subtitle">Рекорд для разблокировки: <span id="shopBestScore" style="color: #00ff88;">0</span></div>
+            <div class="shop-grid" id="shopList"></div>
+            <button class="menu-btn primary" onclick="showMenu()">« НАЗАД В МЕНЮ</button>
+        </div>
     </div>
 
     <!-- ТАБЛИЦА ЛИДЕРОВ -->
     <div id="leaderboardScreen" class="screen hidden">
-        <div class="logo-tag">РЕЙТИНГ ИГРОКОВ</div>
-        <h1>ТАБЛИЦА</h1>
-        <div class="leaderboard-list">
-            <div class="lb-row"><span>1. 👑 Твой рекорд</span><span id="lbBest">0 этажей</span></div>
-            <div class="lb-row"><span>2. 🥷 darkse11</span><span>142 этажа</span></div>
-            <div class="lb-row"><span>3. ⚡️ shrede2r</span><span>89 этажей</span></div>
-            <div class="lb-row"><span>4. 👟 buyer_99</span><span>45 этажей</span></div>
+        <div class="screen-content">
+            <div class="logo-tag">🏅 РЕЙТИНГ</div>
+            <h1>ТАБЛИЦА</h1>
+            <div class="leaderboard-list">
+                <div class="lb-row"><span>👑 Твой рекорд</span><span id="lbBest">0</span></div>
+                <div class="lb-row"><span>🥷 darkse11</span><span>3 420</span></div>
+                <div class="lb-row"><span>⚡️ shrede2r</span><span>2 890</span></div>
+                <div class="lb-row"><span>👟 buyer_99</span><span>1 500</span></div>
+            </div>
+            <button class="menu-btn primary" onclick="showMenu()">« НАЗАД В МЕНЮ</button>
         </div>
-        <button class="menu-btn primary" onclick="showMenu()">« НАЗАД В МЕНЮ</button>
     </div>
 
-    <!-- ЭКРАН ПРАВИЛ -->
+    <!-- ПРАВИЛА -->
     <div id="rulesScreen" class="screen hidden">
-        <div class="logo-tag">ИНФОРМАЦИЯ</div>
-        <h1>БОНУСЫ</h1>
-        <div class="subtitle" style="text-align: left; margin-bottom: 25px;">
-            • <b>30 этажей</b> = Скидка 1% (VA-1PRO)<br>
-            • <b>60 этажей</b> = Скидка 2% (VA-2PRO)<br>
-            • <b>100+ этажей</b> = Скидка 3% (макс. 3%, VA-3PRO)<br><br>
-            🎯 <i>Идеальное попадание ровно по центру дает доп. очки!</i><br>
-            📦 <i>Коробка упала мимо — минус жизнь!</i>
+        <div class="screen-content">
+            <div class="logo-tag">📋 ИНФОРМАЦИЯ</div>
+            <h1>БОНУСЫ</h1>
+            <div class="subtitle" style="text-align: left;">
+                <b style="color: #00ff88;">💰 СКИДКИ:</b><br>
+                • 1 000 очков = 1% (VA-1PRO)<br>
+                • 2 000 очков = 2% (VA-2PRO)<br>
+                • 3 000+ очков = 3% (VA-3PRO)<br><br>
+                <b style="color: #ffd700;">⭐ ДРОПЫ:</b><br>
+                • Золотой = +50 очков<br>
+                • Часики = Заморозка ⏱️<br>
+                • Паленка ❌ = Конец игры
+            </div>
+            <button class="menu-btn primary" onclick="showMenu()">« НАЗАД В МЕНЮ</button>
         </div>
-        <button class="menu-btn primary" onclick="showMenu()">« НАЗАД В МЕНЮ</button>
     </div>
 
-    <!-- ЭКРАН КОНЦА ИГРЫ -->
+    <!-- КОНЕЦ ИГРЫ -->
     <div id="gameOverScreen" class="screen hidden">
-        <h1 id="goTitle">БАШНЯ РУХНУЛА</h1>
-        <div class="subtitle" id="goSubtitle">Твоя башня: 0 этажей</div>
-        <div class="promo-card hidden" id="promoBlock"></div>
-        <br>
-        <button class="menu-btn primary" onclick="startGame()">ИГРАТЬ СНОВА</button>
-        <button class="menu-btn admin" onclick="contactAdmin()">💬 НАПИСАТЬ АДМИНУ</button>
-        <button class="menu-btn" onclick="showMenu()">В ГЛАВНОЕ МЕНЮ</button>
+        <div class="screen-content">
+            <h1>ИГРА ОКОНЧЕНА</h1>
+            <div class="subtitle" id="goSubtitle">Твой счет: 0</div>
+            <div class="promo-card hidden" id="promoBlock"></div>
+            <button class="menu-btn primary" onclick="startGame()" style="margin-top: 20px;">⚡️ ИГРАТЬ СНОВА</button>
+            <button class="menu-btn admin" onclick="contactAdmin()">💬 НАПИСАТЬ АДМИНУ</button>
+            <button class="menu-btn" onclick="showMenu()">В МЕНЮ</button>
+        </div>
     </div>
-
-    <canvas id="gameCanvas"></canvas>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
-        function resize() {
+        function resizeCanvas() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
         }
-        window.addEventListener('resize', resize);
-        resize();
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
 
-        let score = 0;
-        let lives = 3;
-        let isPlaying = false;
-        let combo = 0;
+        let score = 0, lives = 3, combo = 0, isPlaying = false;
+        let items = [], particles = [], floatTexts = [], trail = [];
+        let feverMode = false, feverTimer = 0, nextFeverScore = 500, freezeTimer = 0, screenShakeAmount = 0, gridOffset = 0;
 
-        let highscore = parseInt(localStorage.getItem('va_drop_highscore') || '0');
-        document.getElementById('lbBest').innerText = highscore + " этажей";
+        let highscore = parseInt(localStorage.getItem('va_highscore') || '0');
+        document.getElementById('lbBest').innerText = highscore;
         document.getElementById('shopBestScore').innerText = highscore;
 
         let skins = [
-            { id: 'classic', name: 'Классический неон', color: 'rgba(255, 255, 255, 0.9)', price: 0, unlocked: true },
-            { id: 'stone', name: 'Stone Island Green', color: 'rgba(46, 204, 113, 0.95)', price: 30, unlocked: localStorage.getItem('skin_stone') === 'true' },
-            { id: 'gold', name: 'Золотой кран', color: 'rgba(241, 196, 15, 0.95)', price: 70, unlocked: localStorage.getItem('skin_gold') === 'true' },
-            { id: 'fire', name: 'Огненный Archive', color: 'rgba(231, 76, 60, 0.95)', price: 150, unlocked: localStorage.getItem('skin_fire') === 'true' }
+            { id: 'classic', name: 'Классический белый', color: '#ffffff', glowColor: 'rgba(255,255,255,0.5)', price: 0, unlocked: true },
+            { id: 'neon', name: 'Stone Island Neon', color: '#00ff88', glowColor: 'rgba(0,255,136,0.6)', price: 300, unlocked: localStorage.getItem('skin_neon') === 'true' },
+            { id: 'gold', name: 'Золотой ресейл', color: '#ffd700', glowColor: 'rgba(255,215,0,0.6)', price: 1000, unlocked: localStorage.getItem('skin_gold') === 'true' },
+            { id: 'fire', name: 'Огненный Archive', color: '#ff6b35', glowColor: 'rgba(255,107,53,0.6)', price: 2000, unlocked: localStorage.getItem('skin_fire') === 'true' }
         ];
-        skins[0].unlocked = true;
-
         let currentSkinId = localStorage.getItem('va_current_skin') || 'classic';
-
-        function getActiveSkinColor() {
-            let s = skins.find(x => x.id === currentSkinId);
-            return s ? s.color : 'rgba(255, 255, 255, 0.9)';
-        }
+        function getActiveSkin() { return skins.find(x => x.id === currentSkinId) || skins[0]; }
 
         function renderShop() {
             let list = document.getElementById('shopList');
             list.innerHTML = '';
-            document.getElementById('shopBestScore').innerText = highscore;
-
             skins.forEach(skin => {
                 let isSelected = skin.id === currentSkinId;
                 let div = document.createElement('div');
                 div.className = `shop-item ${isSelected ? 'selected' : ''}`;
-                
-                let btnHtml = '';
-                if (isSelected) {
-                    btnHtml = `<span style="color:#2ecc71; font-weight:bold; font-size:11px;">АКТИВНО</span>`;
-                } else if (skin.unlocked) {
-                    btnHtml = `<button class="shop-btn" onclick="selectSkin('${skin.id}')">ВЫБРАТЬ</button>`;
-                } else if (highscore >= skin.price) {
-                    btnHtml = `<button class="shop-btn" style="background:#2ecc71; color:#fff;" onclick="buySkin('${skin.id}')">КУПИТЬ</button>`;
-                } else {
-                    btnHtml = `<span style="color:#777; font-size:11px;">🔒 От ${skin.price} этажей</span>`;
-                }
-
+                let btnHtml = isSelected ? `<span style="color:#00ff88; font-weight:700;">✓ АКТИВНО</span>` :
+                              skin.unlocked ? `<button class="shop-btn" onclick="selectSkin('${skin.id}')">ВЫБРАТЬ</button>` :
+                              highscore >= skin.price ? `<button class="shop-btn" style="background:#00ff88; color:#000;" onclick="buySkin('${skin.id}')">КУПИТЬ</button>` :
+                              `<span style="color:rgba(255,255,255,0.5);">🔒 ${skin.price}</span>`;
                 div.innerHTML = `<span>${skin.name}</span>${btnHtml}`;
                 list.appendChild(div);
             });
         }
 
-        function selectSkin(id) {
-            currentSkinId = id;
-            localStorage.setItem('va_current_skin', id);
-            renderShop();
-        }
+        function selectSkin(id) { currentSkinId = id; localStorage.setItem('va_current_skin', id); renderShop(); }
+        function buySkin(id) { let s = skins.find(x => x.id === id); if(s && highscore >= s.price){ s.unlocked = true; localStorage.setItem(`skin_${id}`, 'true'); selectSkin(id); } }
 
-        function buySkin(id) {
-            let skin = skins.find(s => s.id === id);
-            if (skin && highscore >= skin.price) {
-                skin.unlocked = true;
-                localStorage.setItem(`skin_${id}`, 'true');
-                selectSkin(id);
-            }
-        }
-
-        // Загружаем картинки для граней коробок
+        // Точное подключение файлов с твоих скриншотов репозитория GitHub
         const rawItems = [
-            "IMG_B6DA3E141F57-1.jpeg", "IMG_B6DA3E141F57-2.jpeg", 
-            "IMG_B6DA3E141F57-3.jpeg", "IMG_B6DA3E141F57-4.jpeg",
-            "IMG_B6DA3E141F57-5.jpeg", "IMG_B6DA3E141F57-6.jpeg"
+            { file: "IMG_B6DA3E141F57-1.jpeg", name: "1", isGold: false, isFreeze: false, isBomb: false },
+            { file: "IMG_B6DA3E141F57-2.jpeg", name: "2", isGold: false, isFreeze: false, isBomb: false },
+            { file: "IMG_B6DA3E141F57-3.jpeg", name: "3", isGold: false, isFreeze: false, isBomb: false },
+            { file: "IMG_B6DA3E141F57-4.jpeg", name: "4", isGold: false, isFreeze: false, isBomb: false },
+            { file: "IMG_B6DA3E141F57-5.jpeg", name: "5", isGold: false, isFreeze: false, isBomb: false },
+            { file: "IMG_B6DA3E141F57-6.jpeg", name: "6", isGold: false, isFreeze: false, isBomb: false },
+            { file: "IMG_B6DA3E141F57-7.jpeg", name: "7", isGold: false, isFreeze: false, isBomb: false },
+            { file: "IMG_B6DA3E141F57-8.jpeg", name: "8", isGold: false, isFreeze: false, isBomb: false },
+            { file: "IMG_B6DA3E141F57-9.jpeg", name: "9", isGold: true,  isFreeze: false, isBomb: false },
+            { file: "IMG_B6DA3E141F57-10.jpeg", name: "10", isGold: false, isFreeze: true, isBomb: false }
         ];
-        const loadedItems = rawItems.map(src => {
+
+        const loadedItems = rawItems.map(item => {
             const img = new Image();
-            img.src = src;
-            return img;
+            img.src = item.file;
+            return { ...item, img: img };
         });
 
-        let audioCtx = null;
-        function initAudio() {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-        }
-
-        function playSound(type) {
-            try {
-                initAudio();
-                if (!audioCtx) return;
-                let osc = audioCtx.createOscillator();
-                let gain = audioCtx.createGain();
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-
-                if (type === 'drop') {
-                    osc.frequency.setValueAtTime(400, audioCtx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
-                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
-                    osc.start(); osc.stop(audioCtx.currentTime + 0.1);
-                } else if (type === 'land') {
-                    osc.type = 'square';
-                    osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.15);
-                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-                    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.15);
-                    osc.start(); osc.stop(audioCtx.currentTime + 0.15);
-                } else if (type === 'perfect') {
-                    osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.3);
-                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
-                    osc.start(); osc.stop(audioCtx.currentTime + 0.3);
-                } else if (type === 'miss') {
-                    osc.type = 'sawtooth';
-                    osc.frequency.setValueAtTime(100, audioCtx.currentTime);
-                    osc.frequency.linearRampToValueAtTime(40, audioCtx.currentTime + 0.4);
-                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.4);
-                    osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+        class Item {
+            constructor() {
+                this.x = Math.random() * (canvas.width - 160) + 80;
+                this.y = canvas.height + 100;
+                this.vx = (Math.random() - 0.5) * 6;
+                this.vy = -(Math.random() * 5 + 13);
+                this.gravity = 0.35;
+                this.size = 95;
+                this.rotation = Math.random() * Math.PI * 2;
+                this.vRotation = (Math.random() - 0.5) * 0.08;
+                
+                let rand = Math.random();
+                if (feverMode) {
+                    let clean = loadedItems.filter(i => !i.isBomb);
+                    this.data = clean[Math.floor(Math.random() * clean.length)];
+                } else if (rand < 0.08) {
+                    this.data = loadedItems.find(i => i.isGold);
+                } else if (rand < 0.15) {
+                    this.data = loadedItems.find(i => i.isFreeze);
+                } else if (rand < 0.3) {
+                    this.data = { isBomb: true };
+                } else {
+                    let normal = loadedItems.filter(i => !i.isGold && !i.isFreeze && !i.isBomb);
+                    this.data = normal[Math.floor(Math.random() * normal.length)];
                 }
-            } catch(e) {}
-        }
-
-        function showMenu() {
-            isPlaying = false;
-            document.getElementById('mainMenu').classList.remove('hidden');
-            document.getElementById('shopScreen').classList.add('hidden');
-            document.getElementById('leaderboardScreen').classList.add('hidden');
-            document.getElementById('rulesScreen').classList.add('hidden');
-            document.getElementById('gameOverScreen').classList.add('hidden');
-            document.getElementById('ui').style.display = 'none';
-        }
-
-        function showShop() {
-            renderShop();
-            document.getElementById('mainMenu').classList.add('hidden');
-            document.getElementById('shopScreen').classList.remove('hidden');
-        }
-
-        function showLeaderboard() {
-            document.getElementById('mainMenu').classList.add('hidden');
-            document.getElementById('leaderboardScreen').classList.remove('hidden');
-        }
-
-        function showRules() {
-            document.getElementById('mainMenu').classList.add('hidden');
-            document.getElementById('rulesScreen').classList.remove('hidden');
-        }
-
-        function contactAdmin() {
-            window.location.href = "https://t.me/darkse11";
-        }
-
-        // --- ЛОГИКА ИГРЫ С БАШНЕЙ ---
-        
-        let tower = [];
-        let activeBox = null;
-        let fallingBox = null;
-        let cameraY = 0;
-        let targetCameraY = 0;
-        let boxWidth = 140;
-        let boxHeight = 80;
-        let swingAngle = 0;
-        let swingSpeed = 0.04;
-
-        class Box {
-            constructor(x, y, isStatic=false) {
-                this.x = x;
-                this.y = y;
-                this.width = boxWidth;
-                this.height = boxHeight;
-                this.isStatic = isStatic;
-                this.vy = 0;
-                this.img = loadedItems[Math.floor(Math.random() * loadedItems.length)];
+                this.sliced = false;
             }
-            
-            draw(camY) {
+
+            update() {
+                let m = freezeTimer > 0 ? 0.35 : 1;
+                this.x += this.vx * m;
+                this.y += this.vy * m;
+                this.vy += this.gravity * m;
+                this.rotation += this.vRotation * m;
+            }
+
+            draw() {
                 ctx.save();
-                ctx.translate(this.x, this.y + camY);
-                
-                // Отрисовка коробки (черная база + рамка)
-                ctx.fillStyle = '#111';
-                ctx.fillRect(-this.width/2, -this.height/2, this.width, this.height);
-                ctx.strokeStyle = getActiveSkinColor();
-                ctx.lineWidth = 2;
-                ctx.strokeRect(-this.width/2, -this.height/2, this.width, this.height);
-                
-                // Вставка картинки внутрь коробки
-                if (this.img && this.img.complete) {
-                    ctx.save();
-                    ctx.beginPath();
-                    ctx.rect(-this.width/2 + 2, -this.height/2 + 2, this.width - 4, this.height - 4);
-                    ctx.clip();
-                    ctx.globalAlpha = 0.8;
-                    // Растягиваем картинку в центр
-                    ctx.drawImage(this.img, -this.width/2, -this.height/2 - 20, this.width, this.width);
-                    ctx.restore();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+
+                if (this.data.isBomb) {
+                    ctx.fillStyle = "rgba(255, 20, 20, 0.15)";
+                    ctx.beginPath(); ctx.roundRect(-this.size/2, -this.size/2, this.size, this.size, 14); ctx.fill();
+                    ctx.lineWidth = 3; ctx.strokeStyle = "#ff1414"; ctx.stroke();
+                    ctx.font = 'bold 36px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    ctx.fillText("❌", 0, 0);
+                } else {
+                    ctx.fillStyle = "rgba(12, 12, 12, 0.85)";
+                    ctx.beginPath(); ctx.roundRect(-this.size/2, -this.size/2, this.size, this.size, 14); ctx.fill();
+                    
+                    ctx.lineWidth = 2.5;
+                    ctx.strokeStyle = this.data.isGold ? "#ffd700" : this.data.isFreeze ? "#3498db" : "rgba(255,255,255,0.3)";
+                    ctx.stroke();
+
+                    // Страховка: если картинка загрузилась, рисуем её. Если нет — стильный плейсхолдер V/A с номером файла
+                    if (this.data.img && this.data.img.complete && this.data.img.naturalWidth !== 0) {
+                        ctx.save();
+                        ctx.beginPath(); ctx.roundRect(-this.size/2 + 2, -this.size/2 + 2, this.size - 4, this.size - 4, 12); ctx.clip();
+                        ctx.drawImage(this.data.img, -this.size/2, -this.size/2, this.size, this.size);
+                        ctx.restore();
+                    } else {
+                        ctx.fillStyle = "#222";
+                        ctx.fillRect(-this.size/2 + 3, -this.size/2 + 3, this.size - 6, this.size - 6);
+                        ctx.fillStyle = "#fff";
+                        ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                        ctx.fillText(`V/A #${this.data.name || ''}`, 0, 0);
+                    }
+
+                    if (this.data.isFreeze) {
+                        ctx.font = 'bold 24px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                        ctx.fillText("⏱️", 0, -this.size/3);
+                    } else if (this.data.isGold) {
+                        ctx.font = 'bold 24px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                        ctx.fillText("⭐", 0, -this.size/3);
+                    }
                 }
-
-                // Логотип V/A поверх
-                ctx.fillStyle = '#fff';
-                ctx.font = 'bold 16px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText("V/A", 0, 0);
-
                 ctx.restore();
             }
         }
 
-        let particles = [];
+        class FloatingText {
+            constructor(x, y, text, color) {
+                this.x = x; this.y = y; this.text = text; this.color = color;
+                this.alpha = 1; this.vy = -2.5;
+            }
+            update() { this.y += this.vy; this.alpha -= 0.035; }
+            draw() {
+                ctx.save(); ctx.globalAlpha = Math.max(0, this.alpha);
+                ctx.font = 'bold 18px sans-serif'; ctx.fillStyle = this.color;
+                ctx.textAlign = 'center'; ctx.fillText(this.text, this.x, this.y);
+                ctx.restore();
+            }
+        }
+
         class Particle {
-            constructor(x, y, color) {
+            constructor(x, y, color = '#00ff88') {
                 this.x = x; this.y = y;
-                this.vx = (Math.random() - 0.5) * 10;
-                this.vy = (Math.random() - 0.5) * 10 - 2;
+                this.vx = (Math.random() - 0.5) * 14;
+                this.vy = (Math.random() - 0.5) * 14;
                 this.alpha = 1; this.color = color;
                 this.size = Math.random() * 5 + 2;
             }
             update() { this.x += this.vx; this.y += this.vy; this.alpha -= 0.03; }
-            draw(camY) {
-                ctx.save();
-                ctx.globalAlpha = Math.max(0, this.alpha);
-                ctx.fillStyle = this.color;
-                ctx.fillRect(this.x, this.y + camY, this.size, this.size);
+            draw() {
+                ctx.save(); ctx.globalAlpha = Math.max(0, this.alpha);
+                ctx.fillStyle = this.color; ctx.fillRect(this.x, this.y, this.size, this.size);
                 ctx.restore();
             }
         }
 
         function startGame() {
-            initAudio();
-            score = 0;
-            lives = 3;
-            combo = 0;
-            tower = [];
-            particles = [];
-            cameraY = 0;
-            targetCameraY = 0;
-            swingSpeed = 0.04;
-            
-            // Первая базовая коробка (фундамент)
-            tower.push(new Box(canvas.width / 2, canvas.height - 100, true));
-            
-            spawnActiveBox();
-
-            isPlaying = true;
+            score = 0; lives = 3; combo = 0; items = []; particles = []; floatTexts = [];
+            feverMode = false; freezeTimer = 0; nextFeverScore = 500; screenShakeAmount = 0; isPlaying = true;
             document.getElementById('score').innerText = score;
             document.getElementById('lives').innerText = lives;
-            
-            document.getElementById('mainMenu').classList.add('hidden');
-            document.getElementById('gameOverScreen').classList.add('hidden');
+            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
             document.getElementById('ui').style.display = 'flex';
         }
 
-        function spawnActiveBox() {
-            swingAngle = 0;
-            activeBox = new Box(canvas.width / 2, 100, false);
-            fallingBox = null;
+        function showMenu() {
+            isPlaying = false;
+            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+            document.getElementById('mainMenu').classList.remove('hidden');
+            document.getElementById('ui').style.display = 'none';
         }
 
-        function triggerPopup(elementId) {
-            let el = document.getElementById(elementId);
-            el.style.opacity = '1';
-            el.style.transform = 'translate(-50%, -10px)';
-            setTimeout(() => { 
-                el.style.opacity = '0'; 
-                el.style.transform = 'translate(-50%, 0)';
-            }, 800);
-        }
+        function showShop() { renderShop(); document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden')); document.getElementById('shopScreen').classList.remove('hidden'); }
+        function showLeaderboard() { document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden')); document.getElementById('leaderboardScreen').classList.remove('hidden'); }
+        function showRules() { document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden')); document.getElementById('rulesScreen').classList.remove('hidden'); }
+        function contactAdmin() { window.location.href = "https://t.me/darkse11"; }
 
         function gameOver() {
             isPlaying = false;
             document.getElementById('ui').style.display = 'none';
-            playSound('miss');
-            
-            if (score > highscore) {
-                highscore = score;
-                localStorage.setItem('va_drop_highscore', highscore);
-                document.getElementById('lbBest').innerText = highscore + " этажей";
-            }
-
+            if (score > highscore) { highscore = score; localStorage.setItem('va_highscore', highscore); document.getElementById('lbBest').innerText = highscore; }
+            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
             document.getElementById('gameOverScreen').classList.remove('hidden');
             
-            let promoText = `Построено: ${score} этажей. `;
-            let promoBlock = document.getElementById('promoBlock');
-
-            if (score >= 100) {
-                promoText += "🔥 Максимальная скидка 3%!";
-                promoBlock.innerHTML = "Промокод: <code>VA-3PRO</code> (скринь и кинь админу)";
-                promoBlock.classList.remove('hidden');
-            } else if (score >= 60) {
-                promoText += "⚡️ Скидка 2%!";
-                promoBlock.innerHTML = "Промокод: <code>VA-2PRO</code> (скринь и кинь админу)";
-                promoBlock.classList.remove('hidden');
-            } else if (score >= 30) {
-                promoText += "✨ Скидка 1%!";
-                promoBlock.innerHTML = "Промокод: <code>VA-1PRO</code> (скринь и кинь админу)";
-                promoBlock.classList.remove('hidden');
-            } else {
-                promoText += "Построй от 30 этажей для получения скидки!";
-                promoBlock.classList.add('hidden');
-            }
-
-            document.getElementById('goSubtitle').innerText = promoText;
+            let promoText = "", promoBlock = document.getElementById('promoBlock');
+            if (score >= 3000) { promoText = "🔥 Скидка 3%!"; promoBlock.innerHTML = 'Промокод: <div class="promo-code">VA-3PRO</div>'; promoBlock.classList.remove('hidden'); }
+            else if (score >= 2000) { promoText = "⚡️ Скидка 2%!"; promoBlock.innerHTML = 'Промокод: <div class="promo-code">VA-2PRO</div>'; promoBlock.classList.remove('hidden'); }
+            else if (score >= 1000) { promoText = "✨ Скидка 1%!"; promoBlock.innerHTML = 'Промокод: <div class="promo-code">VA-1PRO</div>'; promoBlock.classList.remove('hidden'); }
+            else { promoText = "Набери 1000+ очков для скидки!"; promoBlock.classList.add('hidden'); }
+            document.getElementById('goSubtitle').innerText = `Счет: ${score}\n${promoText}`;
         }
 
-        // Тап по экрану — сбрасываем коробку!
-        function handleTap() {
-            if (!isPlaying || fallingBox) return; // Если уже падает - ждем
-            
-            playSound('drop');
-            fallingBox = activeBox;
-            activeBox = null;
-            fallingBox.vy = 12; // Скорость падения
+        function addTouch(x, y) {
+            trail.push({ x, y, time: Date.now() });
+            if (!isPlaying) return;
+
+            items.forEach(item => {
+                if (!item.sliced) {
+                    if (Math.hypot(item.x - x, item.y - y) < 65) {
+                        item.sliced = true;
+                        if (item.data.isBomb) {
+                            lives = 0; document.getElementById('lives').innerText = lives;
+                            screenShakeAmount = 10; gameOver();
+                        } else if (item.data.isGold) {
+                            let m = feverMode ? 3 : 1; score += 50 * m;
+                            document.getElementById('score').innerText = score;
+                            floatTexts.push(new FloatingText(item.x, item.y, `+${50*m}⭐`, "#ffd700"));
+                            for(let i=0; i<20; i++) particles.push(new Particle(item.x, item.y, "#ffd700"));
+                        } else if (item.data.isFreeze) {
+                            freezeTimer = 200;
+                            floatTexts.push(new FloatingText(item.x, item.y, "⏱️ FREEZE", "#3498db"));
+                            for(let i=0; i<15; i++) particles.push(new Particle(item.x, item.y, "#3498db"));
+                        } else {
+                            combo++; let pts = feverMode ? 30 : 10;
+                            score += pts; document.getElementById('score').innerText = score;
+                            floatTexts.push(new FloatingText(item.x, item.y, `+${pts}`, "#00ff88"));
+                            for(let i=0; i<12; i++) particles.push(new Particle(item.x, item.y, "#00ff88"));
+                            if (score >= nextFeverScore && !feverMode) {
+                                feverMode = true; feverTimer = 250; nextFeverScore += 500;
+                            }
+                        }
+                    }
+                }
+            });
         }
 
-        window.addEventListener('mousedown', handleTap);
-        window.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            handleTap();
-        }, { passive: false });
+        window.addEventListener('mousemove', e => addTouch(e.clientX, e.clientY));
+        window.addEventListener('touchmove', e => addTouch(e.touches[0].clientX, e.touches[0].clientY));
 
+        let spawnTimer = 0;
         function animate() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Плавное движение камеры вверх, когда башня растет
-            cameraY += (targetCameraY - cameraY) * 0.1;
+            // Сетка фона
+            gridOffset = (gridOffset + (freezeTimer > 0 ? 0.3 : 1)) % 40;
+            ctx.strokeStyle = feverMode ? "rgba(0, 255, 136, 0.08)" : "rgba(255, 255, 255, 0.03)";
+            ctx.lineWidth = 1;
+            for (let x = 0; x < canvas.width; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke(); }
+            for (let y = gridOffset; y < canvas.height; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke(); }
+
+            if (screenShakeAmount > 0) {
+                ctx.translate((Math.random() - 0.5) * screenShakeAmount, (Math.random() - 0.5) * screenShakeAmount);
+                screenShakeAmount *= 0.85;
+            }
 
             if (isPlaying) {
-                let topBox = tower[tower.length - 1];
+                if (feverMode) { feverTimer--; if (feverTimer <= 0) feverMode = false; }
+                if (freezeTimer > 0) freezeTimer--;
 
-                // Логика качания крана
-                if (activeBox) {
-                    swingAngle += swingSpeed;
-                    let swingRadius = canvas.width / 2 - boxWidth / 2 - 20; // Размах
-                    activeBox.x = canvas.width / 2 + Math.sin(swingAngle) * swingRadius;
-                    activeBox.y = 120 - cameraY; // Кран всегда наверху экрана
-                    
-                    // Рисуем трос крана
-                    ctx.beginPath();
-                    ctx.moveTo(canvas.width / 2, 0);
-                    ctx.lineTo(activeBox.x, activeBox.y + cameraY);
-                    ctx.strokeStyle = '#333';
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
+                spawnTimer++;
+                if (spawnTimer > (feverMode ? 22 : 35)) { items.push(new Item()); spawnTimer = 0; }
 
-                    activeBox.draw(cameraY);
-                }
-
-                // Логика падения коробки
-                if (fallingBox) {
-                    fallingBox.y += fallingBox.vy;
-                    fallingBox.vy += 0.4; // Гравитация
-
-                    // Проверка столкновения с верхней коробкой в башне
-                    if (fallingBox.y + boxHeight/2 >= topBox.y - boxHeight/2) {
-                        
-                        let diffX = Math.abs(fallingBox.x - topBox.x);
-
-                        // Если промахнулся (разница центров больше ширины коробки)
-                        if (diffX > boxWidth) {
-                            fallingBox.isStatic = false; // Продолжает падать мимо
-                        } else {
-                            // Приземлилась!
-                            fallingBox.y = topBox.y - boxHeight;
-                            
-                            // Проверка на идеальное попадание
-                            if (diffX < 10) {
-                                playSound('perfect');
-                                fallingBox.x = topBox.x; // Выравниваем идеально ровно
-                                combo++;
-                                score += 2; // Бонус за перфект
-                                triggerPopup('comboPopup');
-                                for (let i = 0; i < 20; i++) particles.push(new Particle(fallingBox.x, fallingBox.y, getActiveSkinColor()));
-                            } else {
-                                playSound('land');
-                                combo = 0;
-                                score += 1;
-                                for (let i = 0; i < 10; i++) particles.push(new Particle(fallingBox.x, fallingBox.y, '#fff'));
-                            }
-
-                            document.getElementById('score').innerText = score;
-                            tower.push(fallingBox);
-                            fallingBox = null;
-                            
-                            // Камера едет выше
-                            targetCameraY += boxHeight;
-                            
-                            // Ускоряем кран со временем
-                            swingSpeed = Math.min(0.09, 0.04 + (score * 0.0015));
-
-                            spawnActiveBox();
+                for (let i = items.length - 1; i >= 0; i--) {
+                    items[i].update();
+                    items[i].draw();
+                    if (!items[i].sliced && items[i].y > canvas.height + 100) {
+                        items.splice(i, 1);
+                        if (!items[i].data.isBomb && !items[i].data.isFreeze) {
+                            combo = 0; lives--; document.getElementById('lives').innerText = lives;
+                            if (lives <= 0) gameOver();
                         }
+                    } else if (items[i].sliced) {
+                        items.splice(i, 1);
                     }
-
-                    // Если коробка улетела за экран вниз
-                    if (fallingBox && fallingBox.y + cameraY > canvas.height + 200) {
-                        lives--;
-                        document.getElementById('lives').innerText = lives;
-                        fallingBox = null;
-                        
-                        if (lives <= 0) {
-                            gameOver();
-                        } else {
-                            playSound('miss');
-                            spawnActiveBox();
-                        }
-                    }
-
-                    if (fallingBox) fallingBox.draw(cameraY);
-                }
-
-                // Отрисовка башни
-                for (let i = 0; i < tower.length; i++) {
-                    tower[i].draw(cameraY);
                 }
             }
 
-            // Отрисовка частиц
-            for (let i = particles.length - 1; i >= 0; i--) {
-                particles[i].update();
-                particles[i].draw(cameraY);
-                if (particles[i].alpha <= 0) particles.splice(i, 1);
+            for (let i = particles.length - 1; i >= 0; i--) { particles[i].update(); particles[i].draw(); if (particles[i].alpha <= 0) particles.splice(i, 1); }
+            for (let i = floatTexts.length - 1; i >= 0; i--) { floatTexts[i].update(); floatTexts[i].draw(); if (floatTexts[i].alpha <= 0) floatTexts.splice(i, 1); }
+
+            // След ножа
+            let now = Date.now();
+            trail = trail.filter(p => now - p.time < 120);
+            if (trail.length > 1) {
+                let skin = getActiveSkin();
+                ctx.strokeStyle = skin.color;
+                ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+                ctx.beginPath(); ctx.moveTo(trail[0].x, trail[0].y);
+                for (let i = 1; i < trail.length; i++) ctx.lineTo(trail[i].x, trail[i].y);
+                ctx.stroke();
             }
 
             requestAnimationFrame(animate);
         }
 
         animate();
+        showMenu();
     </script>
 </body>
 </html>
