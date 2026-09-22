@@ -6,16 +6,35 @@
     <title>Velvet Armor — Slicer</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        /* Жесткая блокировка сдвигов, отскоков и закрытия страниц на мобилках */
         html, body {
-            width: 100%; height: 100vh; overflow: hidden; touch-action: none;
-            background: #030303; color: #fff;
+            width: 100%;
+            height: 100%;
+            position: fixed;
+            overflow: hidden;
+            touch-action: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            background: #030303;
+            color: #fff;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             -webkit-font-smoothing: antialiased;
+            overscroll-behavior: none;
         }
+
         #gameCanvas {
-            display: block; background: linear-gradient(135deg, #030303 0%, #0a0a0a 100%);
-            cursor: crosshair; width: 100%; height: 100%;
+            display: block;
+            background: linear-gradient(135deg, #030303 0%, #0a0a0a 100%);
+            cursor: crosshair;
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
         }
+
         #ui {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none; z-index: 5;
@@ -68,6 +87,7 @@
             justify-content: center; align-items: center; z-index: 10;
             padding: max(24px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom)) 24px;
             box-sizing: border-box; text-align: center; backdrop-filter: blur(8px); overflow-y: auto;
+            overscroll-behavior: none;
         }
         .screen.hidden { display: none !important; }
         .screen-content { display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 400px; }
@@ -228,16 +248,10 @@
         function selectSkin(id) { currentSkinId = id; localStorage.setItem('va_current_skin', id); renderShop(); }
         function buySkin(id) { let s = skins.find(x => x.id === id); if(s && highscore >= s.price){ s.unlocked = true; localStorage.setItem(`skin_${id}`, 'true'); selectSkin(id); } }
 
-        // ============= AUDIO SYSTEM (Исправлено включение звуков) =============
         let audioCtx = null;
-
         function initAudio() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
         }
 
         function playSound(type) {
@@ -424,7 +438,7 @@
         }
 
         function startGame() {
-            initAudio(); // Разрешаем аудио по клику на кнопку ИГРАТЬ
+            initAudio();
             score = 0; lives = 3; combo = 0; items = []; particles = []; floatTexts = [];
             feverMode = false; freezeTimer = 0; nextFeverScore = 500; screenShakeAmount = 0; isPlaying = true;
             document.getElementById('score').innerText = score;
@@ -486,8 +500,19 @@
             });
         }
 
+        // Обработка касаний с предотвращением стандартных жестов браузера (свайпов назад/вверх)
         window.addEventListener('mousemove', e => addTouch(e.clientX, e.clientY));
-        window.addEventListener('touchmove', e => addTouch(e.touches[0].clientX, e.touches[0].clientY));
+        window.addEventListener('touchmove', e => {
+            if (e.touches && e.touches[0]) {
+                addTouch(e.touches[0].clientX, e.touches[0].clientY);
+            }
+        }, { passive: false });
+        
+        window.addEventListener('touchstart', e => {
+            if (e.touches && e.touches[0]) {
+                addTouch(e.touches[0].clientX, e.touches[0].clientY);
+            }
+        }, { passive: false });
 
         let spawnTimer = 0;
         function animate() {
