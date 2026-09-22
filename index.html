@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Velvet Armor — Slicer</title>
+    <title>Velvet Armor — Drop & Stack</title>
     <style>
         html, body {
             margin: 0;
@@ -22,7 +22,6 @@
         #gameCanvas {
             display: block;
             background: #050505;
-            cursor: crosshair;
             width: 100%;
             height: 100%;
         }
@@ -49,31 +48,17 @@
         }
         #comboPopup {
             position: absolute;
-            top: 70px;
+            top: 120px;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 20px;
+            font-size: 24px;
             font-weight: 900;
             color: #f1c40f;
-            text-shadow: 0 0 10px rgba(241, 196, 15, 0.5);
+            text-shadow: 0 0 15px rgba(241, 196, 15, 0.8);
             z-index: 6;
             pointer-events: none;
             opacity: 0;
             transition: opacity 0.2s;
-        }
-        #feverPopup {
-            position: absolute;
-            top: 110px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 22px;
-            font-weight: 900;
-            color: #2ecc71;
-            text-shadow: 0 0 15px rgba(46, 204, 113, 0.7);
-            z-index: 6;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.3s;
         }
         .screen {
             position: absolute;
@@ -209,7 +194,7 @@
 </head>
 <body>
 
-    <!-- Жесткая блокировка скролла и закрытия вкладки свайпом -->
+    <!-- Жесткая блокировка скролла -->
     <script>
         document.addEventListener('touchmove', function(e) {
             e.preventDefault();
@@ -217,32 +202,30 @@
     </script>
 
     <div id="ui">
-        <div class="score-box">СЧЕТ: <span id="score">0</span></div>
+        <div class="score-box">БАШНЯ: <span id="score">0</span></div>
         <div class="score-box">ЖИЗНИ: <span id="lives">3</span> ❤️</div>
     </div>
-    <div id="comboPopup">COMBO x2! 🔥</div>
-    <div id="feverPopup">⭐ BLACK FRIDAY FEVER! ⭐</div>
+    <div id="comboPopup">PERFECT DROP! 🔥</div>
 
     <!-- ГЛАВНОЕ МЕНЮ -->
     <div id="mainMenu" class="screen">
         <div class="logo-tag">VELVET ARMOR STORE</div>
-        <h1>SLICER</h1>
-        <div class="subtitle">Киберпанк-аркада с твоим шмотом</div>
+        <h1>BOX DROP</h1>
+        <div class="subtitle">Построй самую высокую башню из коробок со шмотом!</div>
         
         <button class="menu-btn primary" onclick="startGame()">⚡️ ИГРАТЬ</button>
-        <button class="menu-btn" onclick="showShop()">🛒 МАГАЗИН ЛЕЗВИЙ</button>
+        <button class="menu-btn" onclick="showShop()">🛒 СТИЛЬ КРАНА</button>
         <button class="menu-btn" onclick="showLeaderboard()">🏆 ТАБЛИЦА ЛИДЕРОВ</button>
         <button class="menu-btn" onclick="showRules()">📜 ПРАВИЛА И СКИДКИ</button>
     </div>
 
-    <!-- МАГАЗИН ЛЕЗВИЙ -->
+    <!-- МАГАЗИН -->
     <div id="shopScreen" class="screen hidden">
-        <div class="logo-tag">АРСЕНАЛ</div>
-        <h1>МАГАЗИН</h1>
+        <div class="logo-tag">СТИЛИЗАЦИЯ</div>
+        <h1>НЕОН</h1>
         <div class="subtitle">Рекорд для разблокировки: <span id="shopBestScore">0</span></div>
         
         <div class="shop-grid" id="shopList"></div>
-
         <button class="menu-btn primary" onclick="showMenu()">« НАЗАД В МЕНЮ</button>
     </div>
 
@@ -251,10 +234,10 @@
         <div class="logo-tag">РЕЙТИНГ ИГРОКОВ</div>
         <h1>ТАБЛИЦА</h1>
         <div class="leaderboard-list">
-            <div class="lb-row"><span>1. 👑 Твой рекорд</span><span id="lbBest">0 очков</span></div>
-            <div class="lb-row"><span>2. 🥷 darkse11</span><span>3 420 очков</span></div>
-            <div class="lb-row"><span>3. ⚡️ shrede2r</span><span>2 890 очков</span></div>
-            <div class="lb-row"><span>4. 👟 buyer_99</span><span>1 500 очков</span></div>
+            <div class="lb-row"><span>1. 👑 Твой рекорд</span><span id="lbBest">0 этажей</span></div>
+            <div class="lb-row"><span>2. 🥷 darkse11</span><span>142 этажа</span></div>
+            <div class="lb-row"><span>3. ⚡️ shrede2r</span><span>89 этажей</span></div>
+            <div class="lb-row"><span>4. 👟 buyer_99</span><span>45 этажей</span></div>
         </div>
         <button class="menu-btn primary" onclick="showMenu()">« НАЗАД В МЕНЮ</button>
     </div>
@@ -264,21 +247,19 @@
         <div class="logo-tag">ИНФОРМАЦИЯ</div>
         <h1>БОНУСЫ</h1>
         <div class="subtitle" style="text-align: left; margin-bottom: 25px;">
-            • <b>1 000 очков</b> = Скидка 1% (VA-1PRO)<br>
-            • <b>2 000 очков</b> = Скидка 2% (VA-2PRO)<br>
-            • <b>3 000+ очков</b> = Скидка 3% (макс. 3%, VA-3PRO)<br><br>
-            ⭐ <i>Золотые дропы дают +50 очков!</i><br>
-            ⏱️ <i>Часики замораживают время!</i><br>
-            🔥 <i>Black Friday Fever каждые 500 очков (х3 очков)!</i><br>
-            ❌ <i>Убитая реплика завершает игру!</i>
+            • <b>30 этажей</b> = Скидка 1% (VA-1PRO)<br>
+            • <b>60 этажей</b> = Скидка 2% (VA-2PRO)<br>
+            • <b>100+ этажей</b> = Скидка 3% (макс. 3%, VA-3PRO)<br><br>
+            🎯 <i>Идеальное попадание ровно по центру дает доп. очки!</i><br>
+            📦 <i>Коробка упала мимо — минус жизнь!</i>
         </div>
         <button class="menu-btn primary" onclick="showMenu()">« НАЗАД В МЕНЮ</button>
     </div>
 
     <!-- ЭКРАН КОНЦА ИГРЫ -->
     <div id="gameOverScreen" class="screen hidden">
-        <h1 id="goTitle">ИГРА ОКОНЧЕНА</h1>
-        <div class="subtitle" id="goSubtitle">Твой счет: 0</div>
+        <h1 id="goTitle">БАШНЯ РУХНУЛА</h1>
+        <div class="subtitle" id="goSubtitle">Твоя башня: 0 этажей</div>
         <div class="promo-card hidden" id="promoBlock"></div>
         <br>
         <button class="menu-btn primary" onclick="startGame()">ИГРАТЬ СНОВА</button>
@@ -301,27 +282,18 @@
 
         let score = 0;
         let lives = 3;
-        let combo = 0;
         let isPlaying = false;
-        let items = [];
-        let particles = [];
-        let floatTexts = [];
-        let trail = [];
-        let feverMode = false;
-        let feverTimer = 0;
-        let nextFeverScore = 500;
-        let freezeTimer = 0;
-        let gridOffset = 0;
+        let combo = 0;
 
-        let highscore = parseInt(localStorage.getItem('va_highscore') || '0');
-        document.getElementById('lbBest').innerText = highscore + " очков";
+        let highscore = parseInt(localStorage.getItem('va_drop_highscore') || '0');
+        document.getElementById('lbBest').innerText = highscore + " этажей";
         document.getElementById('shopBestScore').innerText = highscore;
 
         let skins = [
-            { id: 'classic', name: 'Классический белый', color: 'rgba(255, 255, 255, 0.9)', price: 0, unlocked: true },
-            { id: 'stone', name: 'Stone Island Neon', color: 'rgba(46, 204, 113, 0.95)', price: 300, unlocked: localStorage.getItem('skin_stone') === 'true' },
-            { id: 'gold', name: 'Золотой ресейл', color: 'rgba(241, 196, 15, 0.95)', price: 1000, unlocked: localStorage.getItem('skin_gold') === 'true' },
-            { id: 'fire', name: 'Огненный Archive', color: 'rgba(231, 76, 60, 0.95)', price: 2000, unlocked: localStorage.getItem('skin_fire') === 'true' }
+            { id: 'classic', name: 'Классический неон', color: 'rgba(255, 255, 255, 0.9)', price: 0, unlocked: true },
+            { id: 'stone', name: 'Stone Island Green', color: 'rgba(46, 204, 113, 0.95)', price: 30, unlocked: localStorage.getItem('skin_stone') === 'true' },
+            { id: 'gold', name: 'Золотой кран', color: 'rgba(241, 196, 15, 0.95)', price: 70, unlocked: localStorage.getItem('skin_gold') === 'true' },
+            { id: 'fire', name: 'Огненный Archive', color: 'rgba(231, 76, 60, 0.95)', price: 150, unlocked: localStorage.getItem('skin_fire') === 'true' }
         ];
         skins[0].unlocked = true;
 
@@ -350,7 +322,7 @@
                 } else if (highscore >= skin.price) {
                     btnHtml = `<button class="shop-btn" style="background:#2ecc71; color:#fff;" onclick="buySkin('${skin.id}')">КУПИТЬ</button>`;
                 } else {
-                    btnHtml = `<span style="color:#777; font-size:11px;">🔒 От ${skin.price}</span>`;
+                    btnHtml = `<span style="color:#777; font-size:11px;">🔒 От ${skin.price} этажей</span>`;
                 }
 
                 div.innerHTML = `<span>${skin.name}</span>${btnHtml}`;
@@ -373,44 +345,22 @@
             }
         }
 
+        // Загружаем картинки для граней коробок
+        const rawItems = [
+            "IMG_B6DA3E141F57-1.jpeg", "IMG_B6DA3E141F57-2.jpeg", 
+            "IMG_B6DA3E141F57-3.jpeg", "IMG_B6DA3E141F57-4.jpeg",
+            "IMG_B6DA3E141F57-5.jpeg", "IMG_B6DA3E141F57-6.jpeg"
+        ];
+        const loadedItems = rawItems.map(src => {
+            const img = new Image();
+            img.src = src;
+            return img;
+        });
+
         let audioCtx = null;
-        let bgmInterval = null;
-
         function initAudio() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-            startBGM();
-        }
-
-        function startBGM() {
-            if (bgmInterval) return;
-            let notes = [220, 247.05, 261.63, 293.66, 329.63, 349.23, 392.00];
-            let bassNotes = [110, 130.81, 146.83, 98.00];
-            let step = 0;
-
-            bgmInterval = setInterval(() => {
-                if (!isPlaying || !audioCtx) return;
-                try {
-                    let osc = audioCtx.createOscillator();
-                    let gain = audioCtx.createGain();
-                    osc.type = 'triangle';
-                    osc.connect(gain);
-                    gain.connect(audioCtx.destination);
-
-                    let freq = notes[step % notes.length];
-                    if (step % 4 === 0) freq = bassNotes[(step / 4) % bassNotes.length];
-
-                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-                    gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
-                    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2);
-                    osc.start(); osc.stop(audioCtx.currentTime + 0.2);
-                    step++;
-                } catch(e) {}
-            }, 300);
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
         }
 
         function playSound(type) {
@@ -422,32 +372,32 @@
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
 
-                if (type === 'slice') {
-                    osc.frequency.setValueAtTime(350, audioCtx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(850, audioCtx.currentTime + 0.08);
+                if (type === 'drop') {
+                    osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+                } else if (type === 'land') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.15);
                     gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-                    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.08);
-                    osc.start(); osc.stop(audioCtx.currentTime + 0.08);
-                } else if (type === 'gold') {
+                    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.15);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.15);
+                } else if (type === 'perfect') {
                     osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.2);
-                    gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
-                    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2);
-                    osc.start(); osc.stop(audioCtx.currentTime + 0.2);
-                } else if (type === 'freeze') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.3);
-                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.3);
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
                     gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
                     osc.start(); osc.stop(audioCtx.currentTime + 0.3);
-                } else if (type === 'fake') {
+                } else if (type === 'miss') {
                     osc.type = 'sawtooth';
-                    osc.frequency.setValueAtTime(140, audioCtx.currentTime);
-                    osc.frequency.linearRampToValueAtTime(40, audioCtx.currentTime + 0.3);
-                    gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
-                    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
-                    osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+                    osc.frequency.setValueAtTime(100, audioCtx.currentTime);
+                    osc.frequency.linearRampToValueAtTime(40, audioCtx.currentTime + 0.4);
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.4);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.4);
                 }
             } catch(e) {}
         }
@@ -482,145 +432,78 @@
             window.location.href = "https://t.me/darkse11";
         }
 
-        const rawItems = [
-            { file: "IMG_B6DA3E141F57-1.jpeg", isGold: false, isFreeze: false, isBomb: false },
-            { file: "IMG_B6DA3E141F57-2.jpeg", isGold: false, isFreeze: false, isBomb: false },
-            { file: "IMG_B6DA3E141F57-3.jpeg", isGold: false, isFreeze: false, isBomb: false },
-            { file: "IMG_B6DA3E141F57-4.jpeg", isGold: false, isFreeze: false, isBomb: false },
-            { file: "IMG_B6DA3E141F57-5.jpeg", isGold: false, isFreeze: false, isBomb: false },
-            { file: "IMG_B6DA3E141F57-6.jpeg", isGold: false, isFreeze: false, isBomb: false },
-            { file: "IMG_B6DA3E141F57-7.jpeg", isGold: false, isFreeze: false, isBomb: false },
-            { file: "IMG_B6DA3E141F57-8.jpeg", isGold: false, isFreeze: false, isBomb: false },
-            { file: "IMG_B6DA3E141F57-9.jpeg", isGold: true,  isFreeze: false, isBomb: false },
-            { file: "IMG_B6DA3E141F57-10.jpeg", isGold: false, isFreeze: true,  isBomb: false }
-        ];
+        // --- ЛОГИКА ИГРЫ С БАШНЕЙ ---
+        
+        let tower = [];
+        let activeBox = null;
+        let fallingBox = null;
+        let cameraY = 0;
+        let targetCameraY = 0;
+        let boxWidth = 140;
+        let boxHeight = 80;
+        let swingAngle = 0;
+        let swingSpeed = 0.04;
 
-        const loadedItems = rawItems.map(item => {
-            const img = new Image();
-            img.src = item.file;
-            return { ...item, img: img };
-        });
-
-        class Item {
-            constructor() {
-                this.x = Math.random() * (canvas.width - 160) + 80;
-                this.y = canvas.height + 80;
-                let speedMult = 1 + (score / 1500);
-                this.vx = (Math.random() - 0.5) * 6;
-                this.vy = -(Math.random() * 5 + 13.5) * Math.min(speedMult, 1.4);
-                this.gravity = 0.35;
-                this.size = 85;
-                
-                let rand = Math.random();
-                if (feverMode) {
-                    let cleanItems = loadedItems.filter(i => !i.isBomb);
-                    this.data = cleanItems[Math.floor(Math.random() * cleanItems.length)];
-                } else if (rand < 0.08) {
-                    this.data = loadedItems.find(i => i.isGold);
-                } else if (rand < 0.15) {
-                    this.data = loadedItems.find(i => i.isFreeze);
-                } else if (rand < 0.3) {
-                    this.data = { isBomb: true };
-                } else {
-                    let normalItems = loadedItems.filter(i => !i.isGold && !i.isFreeze);
-                    this.data = normalItems[Math.floor(Math.random() * normalItems.length)];
-                }
-
-                this.sliced = false;
-                this.angle = 0;
-                this.vAngle = (Math.random() - 0.5) * 0.08;
+        class Box {
+            constructor(x, y, isStatic=false) {
+                this.x = x;
+                this.y = y;
+                this.width = boxWidth;
+                this.height = boxHeight;
+                this.isStatic = isStatic;
+                this.vy = 0;
+                this.img = loadedItems[Math.floor(Math.random() * loadedItems.length)];
             }
-
-            update() {
-                let m = freezeTimer > 0 ? 0.4 : 1;
-                this.x += this.vx * m;
-                this.y += this.vy * m;
-                this.vy += this.gravity * m;
-                this.angle += this.vAngle * m;
-            }
-
-            draw() {
+            
+            draw(camY) {
                 ctx.save();
-                ctx.translate(this.x, this.y);
-                ctx.rotate(this.angle);
-
-                if (this.data.isBomb) {
-                    ctx.beginPath();
-                    ctx.arc(0, 0, 38, 0, Math.PI * 2);
-                    ctx.fillStyle = "rgba(255, 0, 0, 0.25)";
-                    ctx.fill();
-                    ctx.lineWidth = 4;
-                    ctx.strokeStyle = "#ff0000";
-                    ctx.stroke();
-
-                    ctx.font = 'bold 28px sans-serif';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText("❌", 0, 0);
-                } else {
-                    ctx.beginPath();
-                    ctx.arc(0, 0, this.size / 2 + 4, 0, Math.PI * 2);
-                    ctx.fillStyle = "rgba(15, 15, 15, 0.85)";
-                    ctx.fill();
-                    ctx.lineWidth = 2;
-                    ctx.strokeStyle = this.data.isGold ? "#ffd700" : (this.data.isFreeze ? "#3498db" : "rgba(255, 255, 255, 0.2)");
-                    ctx.stroke();
-
+                ctx.translate(this.x, this.y + camY);
+                
+                // Отрисовка коробки (черная база + рамка)
+                ctx.fillStyle = '#111';
+                ctx.fillRect(-this.width/2, -this.height/2, this.width, this.height);
+                ctx.strokeStyle = getActiveSkinColor();
+                ctx.lineWidth = 2;
+                ctx.strokeRect(-this.width/2, -this.height/2, this.width, this.height);
+                
+                // Вставка картинки внутрь коробки
+                if (this.img && this.img.complete) {
                     ctx.save();
                     ctx.beginPath();
-                    ctx.arc(0, 0, this.size / 2, 0, Math.PI * 2);
+                    ctx.rect(-this.width/2 + 2, -this.height/2 + 2, this.width - 4, this.height - 4);
                     ctx.clip();
-
-                    try {
-                        ctx.drawImage(this.data.img, -this.size / 2, -this.size / 2, this.size, this.size);
-                    } catch(e) {}
+                    ctx.globalAlpha = 0.8;
+                    // Растягиваем картинку в центр
+                    ctx.drawImage(this.img, -this.width/2, -this.height/2 - 20, this.width, this.width);
                     ctx.restore();
-
-                    if (this.data.isFreeze) {
-                        ctx.font = 'bold 18px sans-serif';
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-                        ctx.fillStyle = '#3498db';
-                        ctx.fillText("⏱️", 0, 0);
-                    }
                 }
 
-                ctx.restore();
-            }
-        }
-
-        class FloatingText {
-            constructor(x, y, text, color) {
-                this.x = x; this.y = y;
-                this.text = text; this.color = color;
-                this.alpha = 1; this.vy = -2;
-            }
-            update() { this.y += this.vy; this.alpha -= 0.035; }
-            draw() {
-                ctx.save();
-                ctx.globalAlpha = Math.max(0, this.alpha);
-                ctx.font = 'bold 18px -apple-system, sans-serif';
-                ctx.fillStyle = this.color;
+                // Логотип V/A поверх
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 16px sans-serif';
                 ctx.textAlign = 'center';
-                ctx.fillText(this.text, this.x, this.y);
+                ctx.textBaseline = 'middle';
+                ctx.fillText("V/A", 0, 0);
+
                 ctx.restore();
             }
         }
 
+        let particles = [];
         class Particle {
             constructor(x, y, color) {
                 this.x = x; this.y = y;
-                this.vx = (Math.random() - 0.5) * 14;
-                this.vy = (Math.random() - 0.5) * 14;
+                this.vx = (Math.random() - 0.5) * 10;
+                this.vy = (Math.random() - 0.5) * 10 - 2;
                 this.alpha = 1; this.color = color;
-                this.size = Math.random() * 6 + 3;
+                this.size = Math.random() * 5 + 2;
             }
-            update() { this.x += this.vx; this.y += this.vy; this.alpha -= 0.025; }
-            draw() {
+            update() { this.x += this.vx; this.y += this.vy; this.alpha -= 0.03; }
+            draw(camY) {
                 ctx.save();
                 ctx.globalAlpha = Math.max(0, this.alpha);
                 ctx.fillStyle = this.color;
-                ctx.fillRect(this.x, this.y, this.size, this.size);
+                ctx.fillRect(this.x, this.y + camY, this.size, this.size);
                 ctx.restore();
             }
         }
@@ -630,12 +513,17 @@
             score = 0;
             lives = 3;
             combo = 0;
-            items = [];
+            tower = [];
             particles = [];
-            floatTexts = [];
-            feverMode = false;
-            freezeTimer = 0;
-            nextFeverScore = 500;
+            cameraY = 0;
+            targetCameraY = 0;
+            swingSpeed = 0.04;
+            
+            // Первая базовая коробка (фундамент)
+            tower.push(new Box(canvas.width / 2, canvas.height - 100, true));
+            
+            spawnActiveBox();
+
             isPlaying = true;
             document.getElementById('score').innerText = score;
             document.getElementById('lives').innerText = lives;
@@ -645,185 +533,175 @@
             document.getElementById('ui').style.display = 'flex';
         }
 
+        function spawnActiveBox() {
+            swingAngle = 0;
+            activeBox = new Box(canvas.width / 2, 100, false);
+            fallingBox = null;
+        }
+
         function triggerPopup(elementId) {
             let el = document.getElementById(elementId);
             el.style.opacity = '1';
-            setTimeout(() => { el.style.opacity = '0'; }, 700);
+            el.style.transform = 'translate(-50%, -10px)';
+            setTimeout(() => { 
+                el.style.opacity = '0'; 
+                el.style.transform = 'translate(-50%, 0)';
+            }, 800);
         }
 
         function gameOver() {
             isPlaying = false;
             document.getElementById('ui').style.display = 'none';
-            playSound('fake');
+            playSound('miss');
             
             if (score > highscore) {
                 highscore = score;
-                localStorage.setItem('va_highscore', highscore);
-                document.getElementById('lbBest').innerText = highscore + " очков";
+                localStorage.setItem('va_drop_highscore', highscore);
+                document.getElementById('lbBest').innerText = highscore + " этажей";
             }
 
             document.getElementById('gameOverScreen').classList.remove('hidden');
             
-            let promoText = `Твой итоговый счет: ${score}. `;
+            let promoText = `Построено: ${score} этажей. `;
             let promoBlock = document.getElementById('promoBlock');
 
-            if (score >= 3000) {
+            if (score >= 100) {
                 promoText += "🔥 Максимальная скидка 3%!";
                 promoBlock.innerHTML = "Промокод: <code>VA-3PRO</code> (скринь и кинь админу)";
                 promoBlock.classList.remove('hidden');
-            } else if (score >= 2000) {
+            } else if (score >= 60) {
                 promoText += "⚡️ Скидка 2%!";
                 promoBlock.innerHTML = "Промокод: <code>VA-2PRO</code> (скринь и кинь админу)";
                 promoBlock.classList.remove('hidden');
-            } else if (score >= 1000) {
+            } else if (score >= 30) {
                 promoText += "✨ Скидка 1%!";
                 promoBlock.innerHTML = "Промокод: <code>VA-1PRO</code> (скринь и кинь админу)";
                 promoBlock.classList.remove('hidden');
             } else {
-                promoText += "Набери от 1 000 очков для получения скидки!";
+                promoText += "Построй от 30 этажей для получения скидки!";
                 promoBlock.classList.add('hidden');
             }
 
             document.getElementById('goSubtitle').innerText = promoText;
         }
 
-        function addTouch(x, y) {
-            trail.push({ x, y, time: Date.now() });
-            if (!isPlaying) return;
-
-            items.forEach(item => {
-                if (!item.sliced) {
-                    let dist = Math.hypot(item.x - x, item.y - y);
-                    if (dist < 60) {
-                        item.sliced = true;
-                        if (item.data.isBomb) {
-                            lives = 0;
-                            document.getElementById('lives').innerText = lives;
-                            gameOver();
-                        } else if (item.data.isGold) {
-                            playSound('gold');
-                            let mult = feverMode ? 3 : 1;
-                            score += 50 * mult;
-                            document.getElementById('score').innerText = score;
-                            floatTexts.push(new FloatingText(item.x, item.y, `+${50*mult} GOLD!`, "#ffd700"));
-                            for (let i = 0; i < 20; i++) {
-                                particles.push(new Particle(item.x, item.y, "#ffd700"));
-                            }
-                        } else if (item.data.isFreeze) {
-                            playSound('freeze');
-                            freezeTimer = 180;
-                            floatTexts.push(new FloatingText(item.x, item.y, "⏱️ FREEZE!", "#3498db"));
-                            for (let i = 0; i < 15; i++) {
-                                particles.push(new Particle(item.x, item.y, "#3498db"));
-                            }
-                        } else {
-                            playSound('slice');
-                            combo++;
-                            let points = feverMode ? 30 : 10;
-                            let txt = feverMode ? "+30 FEVER" : "+10 VA";
-                            if (combo >= 3 && !feverMode) {
-                                points = 20;
-                                txt = "+20 COMBO";
-                                triggerPopup('comboPopup');
-                            }
-                            score += points;
-                            document.getElementById('score').innerText = score;
-                            floatTexts.push(new FloatingText(item.x, item.y, txt, "#ffffff"));
-                            
-                            for (let i = 0; i < 12; i++) {
-                                particles.push(new Particle(item.x, item.y, "#ffffff"));
-                            }
-
-                            if (score >= nextFeverScore && !feverMode) {
-                                feverMode = true;
-                                feverTimer = 250;
-                                triggerPopup('feverPopup');
-                                nextFeverScore += 500;
-                            }
-                        }
-                    }
-                }
-            });
+        // Тап по экрану — сбрасываем коробку!
+        function handleTap() {
+            if (!isPlaying || fallingBox) return; // Если уже падает - ждем
+            
+            playSound('drop');
+            fallingBox = activeBox;
+            activeBox = null;
+            fallingBox.vy = 12; // Скорость падения
         }
 
-        window.addEventListener('mousemove', e => addTouch(e.clientX, e.clientY));
-        window.addEventListener('touchmove', e => {
-            let touch = e.touches[0];
-            addTouch(touch.clientX, touch.clientY);
-        });
+        window.addEventListener('mousedown', handleTap);
+        window.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            handleTap();
+        }, { passive: false });
 
-        let spawnTimer = 0;
         function animate() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            gridOffset = (gridOffset + (freezeTimer > 0 ? 0.5 : 1.5)) % 40;
-            ctx.strokeStyle = feverMode ? "rgba(46, 204, 113, 0.08)" : "rgba(255, 255, 255, 0.03)";
-            ctx.lineWidth = 1;
-            for (let x = 0; x < canvas.width; x += 40) {
-                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
-            }
-            for (let y = gridOffset; y < canvas.height; y += 40) {
-                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
-            }
+            // Плавное движение камеры вверх, когда башня растет
+            cameraY += (targetCameraY - cameraY) * 0.1;
 
             if (isPlaying) {
-                if (feverMode) {
-                    feverTimer--;
-                    if (feverTimer <= 0) feverMode = false;
-                }
-                if (freezeTimer > 0) {
-                    freezeTimer--;
+                let topBox = tower[tower.length - 1];
+
+                // Логика качания крана
+                if (activeBox) {
+                    swingAngle += swingSpeed;
+                    let swingRadius = canvas.width / 2 - boxWidth / 2 - 20; // Размах
+                    activeBox.x = canvas.width / 2 + Math.sin(swingAngle) * swingRadius;
+                    activeBox.y = 120 - cameraY; // Кран всегда наверху экрана
+                    
+                    // Рисуем трос крана
+                    ctx.beginPath();
+                    ctx.moveTo(canvas.width / 2, 0);
+                    ctx.lineTo(activeBox.x, activeBox.y + cameraY);
+                    ctx.strokeStyle = '#333';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                    activeBox.draw(cameraY);
                 }
 
-                spawnTimer++;
-                let spawnInterval = feverMode ? 22 : 36;
-                if (spawnTimer > spawnInterval) {
-                    items.push(new Item());
-                    spawnTimer = 0;
-                }
+                // Логика падения коробки
+                if (fallingBox) {
+                    fallingBox.y += fallingBox.vy;
+                    fallingBox.vy += 0.4; // Гравитация
 
-                for (let i = items.length - 1; i >= 0; i--) {
-                    let item = items[i];
-                    item.update();
-                    item.draw();
+                    // Проверка столкновения с верхней коробкой в башне
+                    if (fallingBox.y + boxHeight/2 >= topBox.y - boxHeight/2) {
+                        
+                        let diffX = Math.abs(fallingBox.x - topBox.x);
 
-                    if (!item.sliced && item.y > canvas.height + 100) {
-                        items.splice(i, 1);
-                        if (!item.data.isBomb && !item.data.isFreeze) {
-                            combo = 0;
-                            lives--;
-                            document.getElementById('lives').innerText = lives;
-                            if (lives <= 0) gameOver();
+                        // Если промахнулся (разница центров больше ширины коробки)
+                        if (diffX > boxWidth) {
+                            fallingBox.isStatic = false; // Продолжает падать мимо
+                        } else {
+                            // Приземлилась!
+                            fallingBox.y = topBox.y - boxHeight;
+                            
+                            // Проверка на идеальное попадание
+                            if (diffX < 10) {
+                                playSound('perfect');
+                                fallingBox.x = topBox.x; // Выравниваем идеально ровно
+                                combo++;
+                                score += 2; // Бонус за перфект
+                                triggerPopup('comboPopup');
+                                for (let i = 0; i < 20; i++) particles.push(new Particle(fallingBox.x, fallingBox.y, getActiveSkinColor()));
+                            } else {
+                                playSound('land');
+                                combo = 0;
+                                score += 1;
+                                for (let i = 0; i < 10; i++) particles.push(new Particle(fallingBox.x, fallingBox.y, '#fff'));
+                            }
+
+                            document.getElementById('score').innerText = score;
+                            tower.push(fallingBox);
+                            fallingBox = null;
+                            
+                            // Камера едет выше
+                            targetCameraY += boxHeight;
+                            
+                            // Ускоряем кран со временем
+                            swingSpeed = Math.min(0.09, 0.04 + (score * 0.0015));
+
+                            spawnActiveBox();
                         }
-                    } else if (item.sliced) {
-                        items.splice(i, 1);
                     }
+
+                    // Если коробка улетела за экран вниз
+                    if (fallingBox && fallingBox.y + cameraY > canvas.height + 200) {
+                        lives--;
+                        document.getElementById('lives').innerText = lives;
+                        fallingBox = null;
+                        
+                        if (lives <= 0) {
+                            gameOver();
+                        } else {
+                            playSound('miss');
+                            spawnActiveBox();
+                        }
+                    }
+
+                    if (fallingBox) fallingBox.draw(cameraY);
+                }
+
+                // Отрисовка башни
+                for (let i = 0; i < tower.length; i++) {
+                    tower[i].draw(cameraY);
                 }
             }
 
+            // Отрисовка частиц
             for (let i = particles.length - 1; i >= 0; i--) {
                 particles[i].update();
-                particles[i].draw();
+                particles[i].draw(cameraY);
                 if (particles[i].alpha <= 0) particles.splice(i, 1);
-            }
-
-            for (let i = floatTexts.length - 1; i >= 0; i--) {
-                floatTexts[i].update();
-                floatTexts[i].draw();
-                if (floatTexts[i].alpha <= 0) floatTexts.splice(i, 1);
-            }
-
-            let now = Date.now();
-            trail = trail.filter(p => now - p.time < 150);
-            if (trail.length > 1) {
-                ctx.beginPath();
-                ctx.moveTo(trail[0].x, trail[0].y);
-                for (let i = 1; i < trail.length; i++) {
-                    ctx.lineTo(trail[i].x, trail[i].y);
-                }
-                ctx.strokeStyle = getActiveSkinColor();
-                ctx.lineWidth = 5;
-                ctx.stroke();
             }
 
             requestAnimationFrame(animate);
